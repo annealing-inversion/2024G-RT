@@ -13,23 +13,76 @@ pub type M4f = Matrix4<f64>;
 pub(crate) fn get_view_matrix(eye_pos: V3f) -> M4f {
     let mut view: Matrix4<f64> = Matrix4::identity();
     /*  implement your code here  */
-
+    let t_view = Matrix4::new(1.0,0.0,0.0,-eye_pos.x,
+                              0.0,1.0,0.0,-eye_pos.y,
+                              0.0,0.0,1.0,-eye_pos.z,
+                              0.0,0.0,0.0,1.0);
+    let r_view = Matrix4::new(1.0,0.0,0.0,0.0,
+                              0.0,1.0,0.0,0.0,
+                              0.0,0.0,1.0,0.0,
+                              0.0,0.0,0.0,1.0);
+    view = r_view * t_view;
     view
 }
 
-pub(crate) fn get_model_matrix(rotation_angle: f64,scale: f64) -> M4f {
+pub(crate) fn get_model_matrix(rotation_angle: f64,scale: f64,whether_to_use_another_axis: bool) -> M4f {
     let mut model: Matrix4<f64> = Matrix4::identity();
+    if whether_to_use_another_axis == true {
+        return model;
+    }
     /*  implement your code here  */
-
+    let mut scale = Matrix4::new(scale,0.0,0.0,0.0,
+                                0.0,scale,0.0,0.0,
+                                0.0,0.0,scale,0.0,
+                                0.0,0.0,0.0,1.0);
+    let ang = rotation_angle.to_radians();
+    let mut rotation = Matrix4::new(ang.cos(),-ang.sin(),0.0,0.0,
+                                    ang.sin(),ang.cos(),0.0,0.0,
+                                    0.0,0.0,1.0,0.0,
+                                    0.0,0.0,0.0,1.0);
+    model = rotation * scale;
     model
+}
+
+pub(crate) fn get_model_matrix_lab3(rotation_angle: f64) -> M4f {
+    let mut model: Matrix4<f64> = Matrix4::identity();
+    let rad: f64 = rotation_angle.to_radians();
+    model[(0, 0)] = rad.cos();
+    model[(2, 2)] = model[(0, 0)];
+    model[(0, 2)] = rad.sin();
+    model[(2, 0)] = -model[(0, 2)];
+    let mut scale: M4f = Matrix4::identity();
+    scale[(0, 0)] = 2.5;
+    scale[(1, 1)] = 2.5;
+    scale[(2, 2)] = 2.5;
+    model * scale 
 }
 
 pub(crate) fn get_projection_matrix(eye_fov: f64, aspect_ratio: f64, z_near: f64, z_far: f64) -> M4f {
     let mut projection: Matrix4<f64> = Matrix4::identity();
     let mut scale: M4f = Matrix4::identity();
     /*  implement your code here  */
-
-    projection * scale
+    let mut n = z_near;
+    let mut f = z_far;
+    let mut m_persp_to_ortho = Matrix4::new(n,0.0,0.0,0.0,
+                                            0.0,n,0.0,0.0,
+                                            0.0,0.0,n+f,-n*f,
+                                            0.0,0.0,1.0,0.0);
+    let mut t = -(eye_fov/2.0).to_radians().tan() * n.abs();
+    let mut r = t * aspect_ratio;
+    let mut l = -r;
+    let mut b = -t;
+    let mut m_ortho_1 = Matrix4::new(2.0/(r-l),0.0,0.0,0.0,
+                                    0.0,2.0/(t-b),0.0,0.0,
+                                    0.0,0.0,2.0/(n-f),0.0,
+                                    0.0,0.0,0.0,1.0);
+    let mut m_ortho_2 = Matrix4::new(1.0,0.0,0.0,-(r+l)/2.0,
+                                    0.0,1.0,0.0,-(t+b)/2.0,
+                                    0.0,0.0,1.0,-(n+f)/2.0,
+                                    0.0,0.0,0.0,1.0);
+    scale = m_ortho_1 * m_ortho_2;
+    projection = scale * m_persp_to_ortho;
+    projection
 }
 
 pub(crate) fn frame_buffer2cv_mat(frame_buffer: &Vec<V3f>) -> Mat {
@@ -144,8 +197,17 @@ pub fn phong_fragment_shader(payload: &FragmentShaderPayload) -> V3f {
     for light in lights {
         // LAB3 TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
+        let light_dir = (light.position - point).normalize();
+        let view_dir = (eye_pos - point).normalize();
+        let half_dir = (light_dir + view_dir).normalize();
 
+        let r_squared = (light.position - point).norm_squared();
 
+        let ambient = amb_light_intensity.component_mul(&ka);
+        let diffuse = light.intensity.component_mul(&kd) / r_squared * f64::max(0.0, normal.normalize().dot(&light_dir));
+        let specular = light.intensity.component_mul(&ks) / r_squared * f64::max(0.0, normal.normalize().dot(&half_dir)).powf(p);
+
+        result_color += ambient + diffuse + specular;
     }
     result_color * 255.0
 }
@@ -157,7 +219,8 @@ pub fn texture_fragment_shader(payload: &FragmentShaderPayload) -> V3f {
         // <获取材质颜色信息>
 
         None => Vector3::new(0.0, 0.0, 0.0),
-        Some(texture) => Vector3::new(0.0, 0.0, 0.0), // Do modification here
+        // Some(texture) => Vector3::new(0.0, 0.0, 0.0), // Do modification here
+        Some(texture) => texture.get_color_bilinear(payload.tex_coords.x, payload.tex_coords.y),
     };
     let kd = texture_color / 255.0; // 材质颜色影响漫反射系数
     let ks = Vector3::new(0.7937, 0.7937, 0.7937);
@@ -185,7 +248,16 @@ pub fn texture_fragment_shader(payload: &FragmentShaderPayload) -> V3f {
     for light in lights {
         // LAB3 TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
-
+        let light_dir = (light.position - point).normalize();
+        let view_dir = (eye_pos - point).normalize();
+        let half_dir = (light_dir + view_dir).normalize();
+        let r_squared = (light.position - point).norm_squared();
+        let ambient = amb_light_intensity.component_mul(&ka);
+        // let diffuse = light.intensity.component_mul(&kd) / r_squared * f64::max(0.0, normal.dot(&light_dir));
+        // let specular = light.intensity.component_mul(&ks) / r_squared * f64::max(0.0, normal.dot(&half_dir)).powf(p);
+        let diffuse = light.intensity.component_mul(&kd) / r_squared * f64::max(0.0, normal.normalize().dot(&light_dir));
+        let specular = light.intensity.component_mul(&ks) / r_squared * f64::max(0.0, normal.normalize().dot(&half_dir)).powf(p);
+        result_color += ambient + diffuse + specular;
     }
 
     result_color * 255.0
@@ -225,6 +297,21 @@ pub fn bump_fragment_shader(payload: &FragmentShaderPayload) -> V3f {
     // dV = kh * kn * (h(u,v+1/h)-h(u,v))
     // Vector ln = (-dU, -dV, 1)
     // Normal n = normalize(TBN * ln)
+    let n = normal;
+    let (x, y, z) = (n.x, n.y, n.z);
+    let t = Vector3::new(x * y / (x * x + z * z).sqrt(), (x * x + z * z).sqrt(), z * y / (x * x + z * z).sqrt());
+    let b = n.cross(&t);
+    let tbn = Matrix3::new(t.x, b.x, n.x, t.y, b.y, n.y, t.z, b.z, n.z);
+    let u = payload.tex_coords.x;
+    let v = payload.tex_coords.y;
+    // let tex = payload.texture.unwrap();
+    let tex = payload.texture.as_ref().unwrap();
+    let w = tex.width as f64;
+    let h = tex.height as f64;
+    let dU = kh * kn * (tex.get_color_bilinear(u + 1.0 / w, v).norm() - tex.get_color_bilinear(u, v).norm());
+    let dV = kh * kn * (tex.get_color_bilinear(u, v + 1.0 / h).norm() - tex.get_color_bilinear(u, v).norm());
+    let ln = Vector3::new(-dU, -dV, 1.0);
+    let normal = (tbn * ln).normalize();
 
     let mut result_color = Vector3::zeros();
     result_color = normal;
@@ -252,7 +339,7 @@ pub fn displacement_fragment_shader(payload: &FragmentShaderPayload) -> V3f {
     let p = 150.0;
 
     let normal = payload.normal;
-    let point = payload.view_pos;
+    let mut point = payload.view_pos;
     let color = payload.color;
 
     let (kh, kn) = (0.2, 0.1);
@@ -267,13 +354,36 @@ pub fn displacement_fragment_shader(payload: &FragmentShaderPayload) -> V3f {
     // Vector ln = (-dU, -dV, 1)
     // Position p = p + kn * n * h(u,v)
     // Normal n = normalize(TBN * ln)
+    let n = normal;
+    let (x, y, z) = (n.x, n.y, n.z);
+    let t = Vector3::new(x * y / (x * x + z * z).sqrt(), (x * x + z * z).sqrt(), z * y / (x * x + z * z).sqrt());
+    let b = n.cross(&t);
+    let tbn = Matrix3::new(t.x, b.x, n.x, t.y, b.y, n.y, t.z, b.z, n.z);
+    let u = payload.tex_coords.x;
+    let v = payload.tex_coords.y;
+    // let tex = payload.texture.unwrap();
+    let tex = payload.texture.as_ref().unwrap();
+    let w = tex.width as f64;
+    let h = tex.height as f64;
+    let dU = kh * kn * (tex.get_color_bilinear(u + 1.0 / w, v).norm() - tex.get_color_bilinear(u, v).norm());
+    let dV = kh * kn * (tex.get_color_bilinear(u, v + 1.0 / h).norm() - tex.get_color_bilinear(u, v).norm());
+    let ln = Vector3::new(-dU, -dV, 1.0);
+
+    point = point + kn * normal.normalize() * tex.get_color_bilinear(u, v).norm();
+    let n = (tbn * ln).normalize();
 
     let mut result_color = Vector3::zeros();
     for light in lights {
         // LAB3 TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
-
-        
+        let light_dir = (light.position - point).normalize();
+        let view_dir = (eye_pos - point).normalize();
+        let half_dir = (light_dir + view_dir).normalize();
+        let r_squared = (light.position - point).norm_squared();
+        let ambient = amb_light_intensity.component_mul(&ka);
+        let diffuse = light.intensity.component_mul(&kd) / r_squared * f64::max(0.0, n.dot(&light_dir));
+        let specular = light.intensity.component_mul(&ks) / r_squared * f64::max(0.0, n.dot(&half_dir)).powf(p);
+        result_color += ambient + diffuse + specular;
     }
 
     result_color * 255.0

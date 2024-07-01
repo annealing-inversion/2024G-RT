@@ -40,7 +40,7 @@ fn main(){
         )  
         .arg(  
             Arg::with_name("输出文件名")  
-                .short('n')  
+                .short('n') 
                 .long("name")  
                 .help("输出文件名")  
                 .takes_value(true)  

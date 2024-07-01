@@ -109,6 +109,51 @@ impl Rasterizer {
 
     pub fn rasterize_triangle(&mut self, triangle: &Triangle, mvp: Matrix4<f64>) {
         /*  Implement your code here  */
+        let (t, view_pos) = Rasterizer::get_new_tri(triangle, self.view, self.model, mvp, (self.width, self.height));
+        //create AABB
+        let mut min_x = t.v[0].x.min(t.v[1].x).min(t.v[2].x).max(0.0).min(self.width as f64 - 1.0);
+        let min_x = min_x.floor() as usize;
+        let mut max_x = t.v[0].x.max(t.v[1].x).max(t.v[2].x).max(0.0).min(self.width as f64 - 1.0);
+        let max_x = max_x.ceil() as usize;
+        let mut min_y = t.v[0].y.min(t.v[1].y).min(t.v[2].y).max(0.0).min(self.height as f64 - 1.0);
+        let min_y = min_y.floor() as usize;
+        let mut max_y = t.v[0].y.max(t.v[1].y).max(t.v[2].y).max(0.0).min(self.height as f64 - 1.0);
+        let max_y = max_y.ceil() as usize;
+        let v1 = Vector3::new(t.v[0].x, t.v[0].y, t.v[0].z);
+        let v2 = Vector3::new(t.v[1].x, t.v[1].y, t.v[1].z);
+        let v3 = Vector3::new(t.v[2].x, t.v[2].y, t.v[2].z);
+        //sample directly
+        for x in min_x..max_x{
+            for y in min_y..max_y{
+                if inside_triangle(x as f64, y as f64, &[v1, v2, v3]) {
+                    let (c1, c2, c3) = compute_barycentric2d(x as f64, y as f64, &[v1, v2, v3]);
+                    let z = c1 * t.v[0].z + c2 * t.v[1].z + c3 * t.v[2].z;
+                    //let ind = self.get_index(x as usize, y as usize);
+                    let ind = Rasterizer::get_index(self.height, self.width, x, y);
+                    if z < self.depth_buf[ind] {
+                        self.depth_buf[ind] = z;
+                        let n = Rasterizer::interpolate_vec3(c1, c2, c3, t.normal[0], t.normal[1], t.normal[2], 1.0);
+                        let tex_co = Rasterizer::interpolate_vec2(c1, c2, c3, t.tex_coords[0], t.tex_coords[1], t.tex_coords[2], 1.0);
+                        //let view_pos = Rasterizer::interpolate_vec3(c1, c2, c3, view_space_pos[0], view_space_pos[1], view_space_pos[2], 1.0);
+                        let view_pos = Rasterizer::interpolate_vec3(c1, c2, c3, view_pos[0], view_pos[1], view_pos[2], 1.0);
+                        let textu = match &self.texture {
+                            Some(tex) => Some(Rc::new(tex)),
+                            None => None,
+                        };
+                        let clr = Rasterizer::interpolate_vec3(c1, c2, c3, t.color[0], t.color[1], t.color[2], 1.0);
+                        let mut payload = FragmentShaderPayload::new(&clr, &n, &tex_co, textu);
+                        payload.view_pos = view_pos;
+                        // let color = (self.fragment_shader.unwrap())(&payload);//??
+                        //self.set_pixel(&Vector3::new(x as f64, y as f64, 0.0), &color);
+                        let color = match &self.fragment_shader {
+                            Some(f) => f(&payload),
+                            None => Vector3::new(0.0, 0.0, 0.0),
+                        };
+                        Rasterizer::set_pixel(self.height, self.width, &mut self.frame_buf, &Vector3::new(x as f64, y as f64, 0.0), &color);
+                    }
+                }
+            }
+        }
 
 
     }
@@ -168,7 +213,7 @@ fn to_vec4(v3: Vector3<f64>, w: Option<f64>) -> Vector4<f64> {
     Vector4::new(v3.x, v3.y, v3.z, w.unwrap_or(1.0))
 }
 
-fn inside_triangle(x: f64, y: f64, v: &[Vector4<f64>; 3]) -> bool {
+fn inside_triangle(x: f64, y: f64, v: &[Vector3<f64>; 3]) -> bool {//??
     let v = [
         Vector3::new(v[0].x, v[0].y, 1.0),
         Vector3::new(v[1].x, v[1].y, 1.0),
@@ -187,7 +232,7 @@ fn inside_triangle(x: f64, y: f64, v: &[Vector4<f64>; 3]) -> bool {
     }
 }
 
-fn compute_barycentric2d(x: f64, y: f64, v: &[Vector4<f64>; 3]) -> (f64, f64, f64) {
+fn compute_barycentric2d(x: f64, y: f64, v: &[Vector3<f64>; 3]) -> (f64, f64, f64) {//??
     let c1 = (x * (v[1].y - v[2].y) + (v[2].x - v[1].x) * y + v[1].x * v[2].y - v[2].x * v[1].y) / (v[0].x * (v[1].y - v[2].y) + (v[2].x - v[1].x) * v[0].y + v[1].x * v[2].y - v[2].x * v[1].y);
     let c2 = (x * (v[2].y - v[0].y) + (v[0].x - v[2].x) * y + v[2].x * v[0].y - v[0].x * v[2].y) / (v[1].x * (v[2].y - v[0].y) + (v[0].x - v[2].x) * v[1].y + v[2].x * v[0].y - v[0].x * v[2].y);
     let c3 = (x * (v[0].y - v[1].y) + (v[1].x - v[0].x) * y + v[0].x * v[1].y - v[1].x * v[0].y) / (v[2].x * (v[0].y - v[1].y) + (v[1].x - v[0].x) * v[2].y + v[0].x * v[1].y - v[1].x * v[0].y);

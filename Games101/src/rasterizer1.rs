@@ -32,6 +32,8 @@ pub struct Rasterizer {
     width: u64,
     height: u64,
     next_id: usize,
+
+    arbitrary_rotation: Matrix4<f64>,
 }
 
 #[derive(Clone, Copy,Debug)]
@@ -46,6 +48,10 @@ pub struct ColBufId(usize);
 impl Rasterizer {
     pub fn new(w: u64, h: u64) -> Self {
         let mut r = Rasterizer::default();
+        r.arbitrary_rotation = Matrix4::new(1.0, 0.0, 0.0, 0.0,
+                                          0.0, 1.0, 0.0, 0.0,
+                                          0.0, 0.0, 1.0, 0.0,
+                                          0.0, 0.0, 0.0, 1.0);
         r.width = w;
         r.height = h;
         r.frame_buf.resize((w * h) as usize, Vector3::zeros());
@@ -161,11 +167,43 @@ impl Rasterizer {
         IndBufId(id)
     }
 
+    // pub fn get_rotation(axis: Vector3<f64>, angle: f64) -> Matrix4<f64> {
+    //     let mut rotation = Matrix4::identity();
+        
+    // }
+    pub fn get_rotation(&mut self, axis: Vector3<f64>, angle: f64) {
+        //let mut rotation = Matrix4::identity();
+        let (x, y, z) = (axis.x, axis.y, axis.z);
+        let len = (x * x + y * y + z * z).sqrt();
+        let (x, y, z) = (x / len, y / len, z / len);
+        
+        // println!("x: {}, y: {}, z: {}", x, y, z);
+        //println!("x: {}, y: {}, z: {}", x, y, z);
+        let ang = angle.to_radians();
+        let matrix1 = Matrix4::new(ang.cos(), 0.0, 0.0, 0.0,
+                                    0.0, ang.cos(), 0.0, 0.0,
+                                    0.0, 0.0, ang.cos(), 0.0,
+                                    0.0, 0.0, 0.0, 1.0);
+        let matrix2 = Matrix4::new(x * x, x * y, x * z, 0.0,
+                                    x * y, y * y, y * z, 0.0,
+                                    x * z, y * z, z * z, 0.0,
+                                    0.0, 0.0, 0.0, 0.0);
+        let matrix2 = (1.0 - ang.cos()) * matrix2;
+        let matrix3 = Matrix4::new(0.0, -z, y, 0.0,
+                                    z, 0.0, -x, 0.0,
+                                    -y, x, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0);
+        let matrix3 = ang.sin() * matrix3;
+        self.arbitrary_rotation = matrix1 + matrix2 + matrix3;
+    }
+
     pub fn draw_triangle(&mut self, pos_buffer: PosBufId, ind_buffer: IndBufId, _typ: Primitive) {
         let buf = &self.pos_buf[&pos_buffer.0];
         let ind: &Vec<Vector3<usize>> = &self.ind_buf[&ind_buffer.0];
 
-        let mvp = self.projection * self.view * self.model;
+        //let mvp = self.projection * self.view * self.model;
+        //let mvp = self.projection * self.view * self.model * arbitrary_rotation;
+        let mvp = self.projection * self.view * self.model * self.arbitrary_rotation;
 
         for i in ind {
             let t = Rasterizer::get_triangle(self.width, self.height, buf, mvp, i);
@@ -174,6 +212,7 @@ impl Rasterizer {
             Self::draw_line(&t.v[1].xyz(), &t.v[2].xyz(), self.height, self.width, &mut self.frame_buf);
         }
     }
+
 
     fn get_triangle(width: u64, height: u64, buf: &Vec<V3f>, mvp: Matrix4<f64>, i: &Vector3<usize>) -> Triangle {
         let f1 = (50.0 - 0.1) / 2.0;
