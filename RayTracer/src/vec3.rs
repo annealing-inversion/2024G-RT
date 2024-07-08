@@ -17,7 +17,10 @@ impl Vec3 {
     pub fn dot(&self, other: Self) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
-
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
+    }
     pub fn from(other: [f64; 3]) -> Self {
         Self::new(other[0], other[1], other[2])
     }
@@ -34,6 +37,9 @@ impl Vec3 {
                 return p;
             }
         }
+    }
+    pub fn reflect(&self, n: Self) -> Self {
+        *self - n * self.dot(n) * 2.0
     }
     pub fn random_unit_vector() -> Self {
         Self::random_in_unit_sphere().normalize()
@@ -69,7 +75,17 @@ impl Vec3 {
 
 }
 
+impl Mul for Vec3 {
+    type Output = Self;
 
+    fn mul(self, other: Self) -> Self {
+        Self {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+}
 
 impl Mul<f64> for Vec3 {
     type Output = Self;

@@ -7,6 +7,7 @@ mod color;
 mod raytracer;
 mod interval;
 mod camera;
+mod material;
 
 use std::rc::Rc;
 use vec3::*;
@@ -34,8 +35,17 @@ fn main() {
     
 
     let mut world = HittableList::new();
-    world.add(Rc::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Rc::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+    // world.add(Rc::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    // world.add(Rc::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+    let material_ground = Rc::new(crate::material::lambertian::new(Vec3::new(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(crate::material::lambertian::new(Vec3::new(0.1, 0.2, 0.5)));
+    let material_left = Rc::new(crate::material::metal::new(Vec3::new(0.8, 0.8, 0.8)));
+    let material_right = Rc::new(crate::material::metal::new(Vec3::new(0.8, 0.6, 0.2)));
+
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, material_ground)));
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, 0.0, -1.2), 0.5, material_center)));
+    world.add(Rc::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, material_left)));
+    world.add(Rc::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, material_right)));
 
     let mut cam = Camera::new();
     // cam.aspect_ratio
@@ -45,6 +55,8 @@ fn main() {
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
 
+
+    // println!("P3\n{} {}\n255", cam.width, cam.height);
     cam.render(&world);
     
     

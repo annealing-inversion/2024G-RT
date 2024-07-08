@@ -1,10 +1,13 @@
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::interval::Interval;
+use crate::material::Material;
+use std::rc::Rc;
 
 pub struct hit_record {
     pub p: Vec3,
     pub normal: Vec3,
+    pub mat:Rc<dyn Material>,
     pub t: f64,
     pub front_face: bool,
 }

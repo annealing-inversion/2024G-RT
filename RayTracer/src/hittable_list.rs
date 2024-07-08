@@ -29,6 +29,7 @@ impl Hittable for HittableList {
             normal: Vec3::zero(),
             t: 0.0,
             front_face: false,
+            mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
         };
         // bool hit_anything = false;
         let mut hit_anything = false;
@@ -44,6 +45,7 @@ impl Hittable for HittableList {
                 rec.p = temp_rec.p;
                 rec.normal = temp_rec.normal;
                 rec.front_face = temp_rec.front_face;
+                rec.mat = Rc::clone(&temp_rec.mat);
 
             }
         }

@@ -5,7 +5,9 @@ use image::{Rgb, RgbImage, ImageBuffer};
 use crate::color::write_color;
 use crate::interval::Interval;
 use crate::hittable::{Hittable, hit_record};
+use crate::material::Material;
 use std::fs::File;
+use std::rc::Rc;
 
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -70,14 +72,27 @@ impl Camera {
             normal: Vec3::zero(),
             t: 0.0,
             front_face: false,
+            mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
         };
         if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
-            // let direction = Vec3::random_on_hemisphere(rec.normal);
-            let direction = rec.normal + Vec3::random_unit_vector();
-            let tmp = self.ray_color(&Ray::new(rec.p, direction), depth-1, world);
-            // return [tmp[0] * 0.1, tmp[1] * 0.1, tmp[2] * 0.1];
-            return [tmp[0] * 0.9, tmp[1] * 0.9, tmp[2] * 0.9];
-            // return [0.5*(rec.normal.x + 1.0), 0.5*(rec.normal.y + 1.0), 0.5*(rec.normal.z + 1.0)];
+            // let direction = rec.normal + Vec3::random_unit_vector();
+            // let tmp = self.ray_color(&Ray::new(rec.p, direction), depth-1, world);
+            // return [tmp[0] * 0.9, tmp[1] * 0.9, tmp[2] * 0.9];
+
+            // println!("albedo: {:?}", rec.mat.albedo);
+
+            let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
+            let mut attenuation = Vec3::zero();
+            if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+                // return [attenuation.x * self.ray_color(&scattered, depth-1, world)[0], attenuation.y * self.ray_color(&scattered, depth-1, world)[1], attenuation.z * self.ray_color(&scattered, depth-1, world)[2]];
+                let tmp = attenuation * Vec3::from(self.ray_color(&scattered, depth-1, world));
+
+                // println!("attenuation: {:?}", attenuation);
+                // println!("tmp: {:?}", tmp);
+                // println!("tmp: {:?}", tmp);
+                return [tmp.x, tmp.y, tmp.z];
+            }
+            return [0.0, 0.0, 0.0];
         }
         let unit_direction = r.direction().normalize();
         let a = 0.5 * (unit_direction.y + 1.0);
@@ -86,9 +101,7 @@ impl Camera {
     }
 
     pub fn initialize(&mut self) -> RgbImage {
-        // width = 800;
         self.width = 800;
-        // height = 800;
         self.height = 800;
         
         // let bar: ProgressBar = if is_ci() {
@@ -122,10 +135,11 @@ impl Camera {
         let path = "output/test.jpg";
         let AUTHOR = "name";
 
-        let mut img = self.initialize();
-
+        let mut img = self.initialize(); 
         for j in 0..self.height {
+            // println!("j: {}", j);
             for i in 0..self.width {
+                // println!("i: {}", i);
                 let mut pixel_color = Vec3::zero();
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
