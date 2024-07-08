@@ -46,22 +46,22 @@ impl Camera {
         let ray_direction = pixel_sample - self.camera_center;
         return Ray::new(ray_origin, ray_direction);
     }
-    pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> [f64; 3] {
-        let mut rec = hit_record {
-            p: Vec3::zero(),
-            normal: Vec3::zero(),
-            t: 0.0,
-            front_face: false,
-        };
-        if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
-            return [0.5*(rec.normal.x + 1.0), 0.5*(rec.normal.y + 1.0), 0.5*(rec.normal.z + 1.0)];
-        }
-        let unit_direction = r.direction().normalize();
-        let a = 0.5 * (unit_direction.y + 1.0);
-        let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3::new(0.5, 0.7, 1.0) * a;
-        return [color.x, color.y, color.z];
-    }
-    pub fn ray_color_diffuse(&self, r: &Ray, depth: usize, world: &dyn Hittable) -> [f64; 3] {
+    // pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> [f64; 3] {
+    //     let mut rec = hit_record {
+    //         p: Vec3::zero(),
+    //         normal: Vec3::zero(),
+    //         t: 0.0,
+    //         front_face: false,
+    //     };
+    //     if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
+    //         return [0.5*(rec.normal.x + 1.0), 0.5*(rec.normal.y + 1.0), 0.5*(rec.normal.z + 1.0)];
+    //     }
+    //     let unit_direction = r.direction().normalize();
+    //     let a = 0.5 * (unit_direction.y + 1.0);
+    //     let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3::new(0.5, 0.7, 1.0) * a;
+    //     return [color.x, color.y, color.z];
+    // }
+    pub fn ray_color(&self, r: &Ray, depth: usize, world: &dyn Hittable) -> [f64; 3] {
         if depth <= 0 {
             return [0.0, 0.0, 0.0];
         }
@@ -71,10 +71,12 @@ impl Camera {
             t: 0.0,
             front_face: false,
         };
-        if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
-            let direction = Vec3::random_on_hemisphere(rec.normal);
-            let tmp = self.ray_color_diffuse(&Ray::new(rec.p, direction), depth-1, world);
-            return [tmp[0] * 0.5, tmp[1] * 0.5, tmp[2] * 0.5];
+        if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
+            // let direction = Vec3::random_on_hemisphere(rec.normal);
+            let direction = rec.normal + Vec3::random_unit_vector();
+            let tmp = self.ray_color(&Ray::new(rec.p, direction), depth-1, world);
+            // return [tmp[0] * 0.1, tmp[1] * 0.1, tmp[2] * 0.1];
+            return [tmp[0] * 0.9, tmp[1] * 0.9, tmp[2] * 0.9];
             // return [0.5*(rec.normal.x + 1.0), 0.5*(rec.normal.y + 1.0), 0.5*(rec.normal.z + 1.0)];
         }
         let unit_direction = r.direction().normalize();
@@ -128,7 +130,7 @@ impl Camera {
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
                     // pixel_color += Vec3::from(self.ray_color(&r, world));
-                    pixel_color += Vec3::from(self.ray_color_diffuse(&r, self.max_depth, world));
+                    pixel_color += Vec3::from(self.ray_color(&r, self.max_depth, world));
                 } 
                 write_color(pixel_color * self.pixel_samples_scale, &mut img, i as usize, j as usize);
                 // bar.inc(1);
