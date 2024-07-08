@@ -18,6 +18,34 @@ impl Vec3 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
+    pub fn from(other: [f64; 3]) -> Self {
+        Self::new(other[0], other[1], other[2])
+    }
+    pub fn random() -> Self {
+        Self::new(rand::random::<f64>(), rand::random::<f64>(), rand::random::<f64>())
+    }
+    pub fn random_with_range(min: f64, max: f64) -> Self {
+        Self::new(rand::random::<f64>()*(max-min)+min, rand::random::<f64>()*(max-min)+min, rand::random::<f64>()*(max-min)+min)
+    }
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let p = Self::random_with_range(-1.0, 1.0);
+            if p.squared_length() < 1.0 {
+                return p;
+            }
+        }
+    }
+    pub fn random_unit_vector() -> Self {
+        Self::random_in_unit_sphere().normalize()
+    }
+    pub fn random_on_hemisphere(normal: Self) -> Self {
+        let on_unit_sphere = Self::random_unit_vector();
+        if on_unit_sphere.dot(normal) > 0.0 {
+            return on_unit_sphere;
+        } else {
+            return on_unit_sphere * -1.0 as f64;
+        }
+    }
     pub fn ones() -> Self {
         Self::new(1.0, 1.0, 1.0)
     }

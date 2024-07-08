@@ -15,22 +15,36 @@ pub struct Camera {
     pub pixel_delta_u: Vec3,
     pub pixel_delta_v: Vec3,
     pub pixel00_loc: Vec3,
-
+    pub samples_per_pixel: usize,
+    pub pixel_samples_scale: f64,
 }
 
 impl Camera {
     pub fn new() -> Self {
         Self {
-            aspect_ratio: 0.0,
-            width: 0,
-            height: 0,
+            aspect_ratio: 1.0,
+            width: 100,
+            height: 100,
+            samples_per_pixel: 10,
+            pixel_samples_scale: 0.1,
             camera_center: Vec3::zero(),
             pixel_delta_u: Vec3::zero(),
             pixel_delta_v: Vec3::zero(),
             pixel00_loc: Vec3::zero(),
         }
     }
-    pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> [u8; 3] {
+    pub fn sample_square(&self) -> Vec3 {
+        // return vec3::Vec3::new(random_double()-0.5, random_double()-0.5, 0.0);
+        return Vec3::new(rand::random::<f64>()-0.5, rand::random::<f64>()-0.5, 0.0);
+    }
+    pub fn get_ray(&self, i: usize, j: usize) -> Ray {
+        let mut offset = self.sample_square();
+        let mut pixel_sample = self.pixel00_loc + self.pixel_delta_u * (i as f64 + offset.x) + self.pixel_delta_v * (j as f64 + offset.y);
+        let ray_origin = self.camera_center;
+        let ray_direction = pixel_sample - self.camera_center;
+        return Ray::new(ray_origin, ray_direction);
+    }
+    pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> [f64; 3] {
         let mut rec = hit_record {
             p: Vec3::zero(),
             normal: Vec3::zero(),
@@ -38,13 +52,33 @@ impl Camera {
             front_face: false,
         };
         if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
-            return [((rec.normal.x + 1.0) * 0.5 * 255.999) as u8, ((rec.normal.y + 1.0) * 0.5 * 255.999) as u8, ((rec.normal.z + 1.0) * 0.5 * 255.999) as u8];
+            return [0.5*(rec.normal.x + 1.0), 0.5*(rec.normal.y + 1.0), 0.5*(rec.normal.z + 1.0)];
         }
         let unit_direction = r.direction().normalize();
         let a = 0.5 * (unit_direction.y + 1.0);
         let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3::new(0.5, 0.7, 1.0) * a;
-        return [(color.x * 255.999) as u8, (color.y * 255.999) as u8, (color.z * 255.999) as u8];
+        return [color.x, color.y, color.z];
     }
+    pub fn ray_color_diffuse(&self, r: &Ray, world: &dyn Hittable) -> [f64; 3] {
+        let mut rec = hit_record {
+            p: Vec3::zero(),
+            normal: Vec3::zero(),
+            t: 0.0,
+            front_face: false,
+        };
+        if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
+            let direction = Vec3::random_on_hemisphere(rec.normal);
+            // return self.ray_color_diffuse(&Ray::new(rec.p, direction), world) * 0.5 as f64;
+            let tmp = self.ray_color_diffuse(&Ray::new(rec.p, direction), world);
+            return [tmp[0] * 0.5, tmp[1] * 0.5, tmp[2] * 0.5];
+            // return [0.5*(rec.normal.x + 1.0), 0.5*(rec.normal.y + 1.0), 0.5*(rec.normal.z + 1.0)];
+        }
+        let unit_direction = r.direction().normalize();
+        let a = 0.5 * (unit_direction.y + 1.0);
+        let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3::new(0.5, 0.7, 1.0) * a;
+        return [color.x, color.y, color.z];
+    }
+
     pub fn initialize(&mut self) -> RgbImage {
         // width = 800;
         self.width = 800;
@@ -56,7 +90,8 @@ impl Camera {
         // } else {
         //     ProgressBar::new((height * width) as u64)
         // };
-
+        self.samples_per_pixel = 10;
+        self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
         let mut img: RgbImage = ImageBuffer::new(self.width as u32, self.height as u32);
         // aspect_ratio = width as f64 / height as f64;
         self.aspect_ratio = self.width as f64 / self.height as f64;
@@ -87,11 +122,14 @@ impl Camera {
 
         for j in 0..self.height {
             for i in 0..self.width {
-                let pixel_center = self.pixel00_loc + self.pixel_delta_u * i as f64 + self.pixel_delta_v * j as f64;
-                let ray_dir = pixel_center - self.camera_center;
-                let ray = Ray::new(self.camera_center, ray_dir);
-                let pixel_color = self.ray_color(&ray, world);
-                write_color(pixel_color, &mut img, i as usize, j as usize);
+                let mut pixel_color = Vec3::zero();
+                for sample in 0..self.samples_per_pixel {
+                    let r = self.get_ray(i, j);
+                    // pixel_color += Vec3::from(self.ray_color(&r, world));
+                    pixel_color += Vec3::from(self.ray_color_diffuse(&r, world));
+                }
+                // self.write_color(pixel_color, &mut img, i as usize, j as usize);    
+                write_color(pixel_color * self.pixel_samples_scale, &mut img, i as usize, j as usize);
                 // bar.inc(1);
             }
         }

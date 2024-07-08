@@ -41,6 +41,7 @@ fn main() {
     // cam.aspect_ratio
     cam.width = 800;
     cam.height = 800;
+    cam.samples_per_pixel = 10;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
 
     cam.render(&world);
