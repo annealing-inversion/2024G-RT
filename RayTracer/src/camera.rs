@@ -20,6 +20,7 @@ pub struct Camera {
     pub samples_per_pixel: usize,
     pub pixel_samples_scale: f64,
     pub max_depth: usize,  
+    pub vfov: f64,
 }
 
 impl Camera {
@@ -35,6 +36,7 @@ impl Camera {
             pixel_delta_u: Vec3::zero(),
             pixel_delta_v: Vec3::zero(),
             pixel00_loc: Vec3::zero(),
+            vfov: 90.0,
         }
     }
     pub fn sample_square(&self) -> Vec3 {
@@ -106,9 +108,16 @@ impl Camera {
         let mut img: RgbImage = ImageBuffer::new(self.width as u32, self.height as u32);
         self.aspect_ratio = self.width as f64 / self.height as f64;
         let mut focal_length = 1.0;
-        let viewport_height = 2.0; 
+
+        let theta = self.vfov.to_radians();
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
+
         let viewport_width = viewport_height * (self.width as f64 / self.height as f64);
         self.camera_center = Vec3::new(0.0, 0.0, 0.0);
+
+
+
 
         let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
         let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
