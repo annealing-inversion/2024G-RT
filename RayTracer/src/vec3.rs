@@ -2,6 +2,7 @@ use std::ops::{Add, AddAssign};
 use std::ops::Sub;
 use std::ops::Mul;
 use std::ops::Div;
+use crate::raytracer::random_double_range;
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Vec3 {
@@ -30,6 +31,14 @@ impl Vec3 {
     }
     pub fn length(&self) -> f64 {
         self.squared_length().sqrt()
+    }
+    pub fn random_in_unit_disk() -> Self {
+        loop {
+            let p = Vec3::new(random_double_range(-1.0, 1.0), random_double_range(-1.0, 1.0), 0.0);
+            if p.squared_length() < 1.0 {
+                return p;
+            }
+        }
     }
     pub fn from(other: [f64; 3]) -> Self {
         Self::new(other[0], other[1], other[2])

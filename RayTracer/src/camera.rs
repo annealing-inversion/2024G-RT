@@ -27,6 +27,10 @@ pub struct Camera {
     pub u: Vec3,
     pub v: Vec3,
     pub w: Vec3,
+    pub defocus_angle: f64,
+    pub focus_dist: f64,
+    pub defocus_disk_u: Vec3,
+    pub defocus_disk_v: Vec3,
 }
 
 impl Camera {
@@ -49,7 +53,16 @@ impl Camera {
             u: Vec3::zero(),
             v: Vec3::zero(),
             w: Vec3::zero(),
+            defocus_angle: 0.0,
+            focus_dist: 10.0,
+            defocus_disk_u: Vec3::zero(),
+            defocus_disk_v: Vec3::zero(),
         }
+    }
+    pub fn defocus_disk_sample(&self) -> Vec3 {
+        // let p = random_in_unit_disk();
+        let p = Vec3::random_in_unit_disk();
+        return self.defocus_disk_u * p.x + self.defocus_disk_v * p.y + self.camera_center;
     }
     pub fn sample_square(&self) -> Vec3 {
         // return vec3::Vec3::new(random_double()-0.5, random_double()-0.5, 0.0);
@@ -58,8 +71,8 @@ impl Camera {
     pub fn get_ray(&self, i: usize, j: usize) -> Ray {
         let mut offset = self.sample_square();
         let mut pixel_sample = self.pixel00_loc + self.pixel_delta_u * (i as f64 + offset.x) + self.pixel_delta_v * (j as f64 + offset.y);
-        let ray_origin = self.camera_center;
-        let ray_direction = pixel_sample - self.camera_center;
+        let ray_origin = if self.defocus_angle > 0.0 {self.defocus_disk_sample()} else {self.camera_center};
+        let ray_direction = pixel_sample - ray_origin;
         return Ray::new(ray_origin, ray_direction);
     }
     // pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> [f64; 3] {
@@ -114,11 +127,11 @@ impl Camera {
         
         self.camera_center = self.lookfrom;
 
-        let mut focal_length = (self.lookfrom - self.lookat).length();
+        // let mut focal_length = (self.lookfrom - self.lookat).length();
 
         let theta = self.vfov.to_radians();
         let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h * focal_length;
+        let viewport_height = 2.0 * h * self.focus_dist;
         let viewport_width = viewport_height * (self.width as f64 / self.height as f64);
 
         self.w = (self.lookfrom - self.lookat).normalize();
@@ -134,9 +147,14 @@ impl Camera {
         self.pixel_delta_v = viewport_v / self.height as f64;
 
         // let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - Vec3::new(0.0, 0.0, focal_length);
-        let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - (self.w * focal_length);
+        // let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - (self.w * focal_length);
+        let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - self.w * self.focus_dist;
         // pixel00_loc = viewport_upper_left + pixel_delta_u / 2.0 + pixel_delta_v / 2.0;
         self.pixel00_loc = viewport_upper_left + self.pixel_delta_u / 2.0 + self.pixel_delta_v / 2.0;
+
+        let defocus_radius = self.focus_dist * (self.defocus_angle / 2.0).to_radians().tan();
+        self.defocus_disk_u = self.u * defocus_radius;
+        self.defocus_disk_v = self.v * defocus_radius;
         return img;
     }
     pub fn render(&mut self, world: &dyn Hittable) -> () {
