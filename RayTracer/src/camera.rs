@@ -75,24 +75,16 @@ impl Camera {
             mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
         };
         if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
-            // let direction = rec.normal + Vec3::random_unit_vector();
-            // let tmp = self.ray_color(&Ray::new(rec.p, direction), depth-1, world);
-            // return [tmp[0] * 0.9, tmp[1] * 0.9, tmp[2] * 0.9];
-
-            // println!("albedo: {:?}", rec.mat.albedo);
-
             let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
             let mut attenuation = Vec3::zero();
             if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
-                // return [attenuation.x * self.ray_color(&scattered, depth-1, world)[0], attenuation.y * self.ray_color(&scattered, depth-1, world)[1], attenuation.z * self.ray_color(&scattered, depth-1, world)[2]];
+                // let tmp = attenuation * Vec3::from(self.ray_color(&scattered, depth-1, world));
                 let tmp = attenuation * Vec3::from(self.ray_color(&scattered, depth-1, world));
-
-                // println!("attenuation: {:?}", attenuation);
-                // println!("tmp: {:?}", tmp);
-                // println!("tmp: {:?}", tmp);
                 return [tmp.x, tmp.y, tmp.z];
             }
-            return [0.0, 0.0, 0.0];
+            else {
+                return [0.0, 0.0, 0.0];
+            }
         }
         let unit_direction = r.direction().normalize();
         let a = 0.5 * (unit_direction.y + 1.0);

@@ -34,6 +34,9 @@ impl Hittable for Sphere {
         let sqrtd = discriminant.sqrt();
 
         let root = (h - sqrtd) / a;
+        if root <= 0.05 {
+            return false;
+        }
         if !ray_t.surrounds(root) {
             let root = (h + sqrtd) / a;
             if !ray_t.surrounds(root) {
@@ -47,7 +50,7 @@ impl Hittable for Sphere {
         rec.mat = Rc::clone(&self.mat);
 
         // println!("{}",*rec.mat.as_ref());
-        //println!("rec.mat: {:?}", rec.mat); 
+        //println!("rec.mat: {:?}", rec.mat);
 
         return true;
     }
