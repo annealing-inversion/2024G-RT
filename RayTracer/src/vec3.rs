@@ -21,7 +21,16 @@ impl Vec3 {
         let s = 1e-8;
         self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
     }
-
+    pub fn cross(u: Self, v: Self) -> Self {
+        Self::new(
+            u.y * v.z - u.z * v.y,
+            u.z * v.x - u.x * v.z,
+            u.x * v.y - u.y * v.x,
+        )
+    }
+    pub fn length(&self) -> f64 {
+        self.squared_length().sqrt()
+    }
     pub fn from(other: [f64; 3]) -> Self {
         Self::new(other[0], other[1], other[2])
     }

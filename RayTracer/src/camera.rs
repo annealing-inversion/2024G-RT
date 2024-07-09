@@ -21,6 +21,12 @@ pub struct Camera {
     pub pixel_samples_scale: f64,
     pub max_depth: usize,  
     pub vfov: f64,
+    pub lookfrom: Vec3,
+    pub lookat: Vec3,
+    pub vup: Vec3,
+    pub u: Vec3,
+    pub v: Vec3,
+    pub w: Vec3,
 }
 
 impl Camera {
@@ -37,6 +43,12 @@ impl Camera {
             pixel_delta_v: Vec3::zero(),
             pixel00_loc: Vec3::zero(),
             vfov: 90.0,
+            lookfrom: Vec3::zero(),
+            lookat: Vec3::new(0.0, 0.0, -1.0),
+            vup: Vec3::new(0.0, 1.0, 0.0),
+            u: Vec3::zero(),
+            v: Vec3::zero(),
+            w: Vec3::zero(),
         }
     }
     pub fn sample_square(&self) -> Vec3 {
@@ -95,39 +107,34 @@ impl Camera {
     }
 
     pub fn initialize(&mut self) -> RgbImage {
-        self.width = 800;
-        self.height = 800;
-        
-        // let bar: ProgressBar = if is_ci() {
-        // ProgressBar::hidden()
-        // } else {
-        //     ProgressBar::new((height * width) as u64)
-        // };
-        self.samples_per_pixel = 10;
         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
         let mut img: RgbImage = ImageBuffer::new(self.width as u32, self.height as u32);
+
         self.aspect_ratio = self.width as f64 / self.height as f64;
-        let mut focal_length = 1.0;
+        
+        self.camera_center = self.lookfrom;
+
+        let mut focal_length = (self.lookfrom - self.lookat).length();
 
         let theta = self.vfov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h * focal_length;
-
         let viewport_width = viewport_height * (self.width as f64 / self.height as f64);
-        self.camera_center = Vec3::new(0.0, 0.0, 0.0);
 
+        self.w = (self.lookfrom - self.lookat).normalize();
+        self.u = Vec3::cross(self.vup, self.w).normalize();
+        self.v = Vec3::cross(self.w, self.u);
 
-
-
-        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+        let viewport_u = self.u * viewport_width;
+        let viewport_v = self.v * viewport_height * -1.0;
 
         // pixel_delta_u = viewport_u / width as f64;
         self.pixel_delta_u = viewport_u / self.width as f64;
         // pixel_delta_v = viewport_v / height as f64;
         self.pixel_delta_v = viewport_v / self.height as f64;
 
-        let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+        // let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+        let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - (self.w * focal_length);
         // pixel00_loc = viewport_upper_left + pixel_delta_u / 2.0 + pixel_delta_v / 2.0;
         self.pixel00_loc = viewport_upper_left + self.pixel_delta_u / 2.0 + self.pixel_delta_v / 2.0;
         return img;
