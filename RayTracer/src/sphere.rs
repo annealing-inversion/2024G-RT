@@ -11,10 +11,6 @@ pub struct Sphere {
     pub mat: Rc<dyn Material>,
 }   
 impl Sphere {
-    // pub fn new(center: Vec3, radius: f64) -> Self {
-    //     // let default_mat = Rc::new(crate::material::lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
-    //     Self { center, radius }
-    // }
     pub fn new(center: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
         Self { center, radius, mat }
     }
@@ -34,7 +30,7 @@ impl Hittable for Sphere {
         let sqrtd = discriminant.sqrt();
 
         let root = (h - sqrtd) / a;
-        if root <= 0.05 {
+        if root <= 0.003 {
             return false;
         }
         if !ray_t.surrounds(root) {

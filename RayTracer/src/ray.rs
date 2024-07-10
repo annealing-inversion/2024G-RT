@@ -16,7 +16,6 @@ impl Ray {
         self.dir
     }
     pub fn at(&self, t: f64) -> Vec3 {
-        // self.orig + self.dir * t
         let res = Vec3::new(self.dir.x * t, self.dir.y * t, self.dir.z * t);
         res + self.orig
     }

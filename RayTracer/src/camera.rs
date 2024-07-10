@@ -60,12 +60,10 @@ impl Camera {
         }
     }
     pub fn defocus_disk_sample(&self) -> Vec3 {
-        // let p = random_in_unit_disk();
         let p = Vec3::random_in_unit_disk();
         return self.defocus_disk_u * p.x + self.defocus_disk_v * p.y + self.camera_center;
     }
     pub fn sample_square(&self) -> Vec3 {
-        // return vec3::Vec3::new(random_double()-0.5, random_double()-0.5, 0.0);
         return Vec3::new(rand::random::<f64>()-0.5, rand::random::<f64>()-0.5, 0.0);
     }
     pub fn get_ray(&self, i: usize, j: usize) -> Ray {
@@ -75,21 +73,6 @@ impl Camera {
         let ray_direction = pixel_sample - ray_origin;
         return Ray::new(ray_origin, ray_direction);
     }
-    // pub fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> [f64; 3] {
-    //     let mut rec = hit_record {
-    //         p: Vec3::zero(),
-    //         normal: Vec3::zero(),
-    //         t: 0.0,
-    //         front_face: false,
-    //     };
-    //     if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
-    //         return [0.5*(rec.normal.x + 1.0), 0.5*(rec.normal.y + 1.0), 0.5*(rec.normal.z + 1.0)];
-    //     }
-    //     let unit_direction = r.direction().normalize();
-    //     let a = 0.5 * (unit_direction.y + 1.0);
-    //     let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3::new(0.5, 0.7, 1.0) * a;
-    //     return [color.x, color.y, color.z];
-    // }
     pub fn ray_color(&self, r: &Ray, depth: usize, world: &dyn Hittable) -> [f64; 3] {
         if depth <= 0 {
             return [0.0, 0.0, 0.0];
@@ -105,7 +88,6 @@ impl Camera {
             let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
             let mut attenuation = Vec3::zero();
             if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
-                // let tmp = attenuation * Vec3::from(self.ray_color(&scattered, depth-1, world));
                 let tmp = attenuation * Vec3::from(self.ray_color(&scattered, depth-1, world));
                 return [tmp.x, tmp.y, tmp.z];
             }
@@ -127,7 +109,6 @@ impl Camera {
         
         self.camera_center = self.lookfrom;
 
-        // let mut focal_length = (self.lookfrom - self.lookat).length();
 
         let theta = self.vfov.to_radians();
         let h = (theta / 2.0).tan();
@@ -141,15 +122,10 @@ impl Camera {
         let viewport_u = self.u * viewport_width;
         let viewport_v = self.v * viewport_height * -1.0;
 
-        // pixel_delta_u = viewport_u / width as f64;
         self.pixel_delta_u = viewport_u / self.width as f64;
-        // pixel_delta_v = viewport_v / height as f64;
         self.pixel_delta_v = viewport_v / self.height as f64;
 
-        // let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - Vec3::new(0.0, 0.0, focal_length);
-        // let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - (self.w * focal_length);
         let viewport_upper_left = self.camera_center - viewport_u / 2.0 - viewport_v / 2.0 - self.w * self.focus_dist;
-        // pixel00_loc = viewport_upper_left + pixel_delta_u / 2.0 + pixel_delta_v / 2.0;
         self.pixel00_loc = viewport_upper_left + self.pixel_delta_u / 2.0 + self.pixel_delta_v / 2.0;
 
         let defocus_radius = self.focus_dist * (self.defocus_angle / 2.0).to_radians().tan();
@@ -163,9 +139,7 @@ impl Camera {
 
         let mut img = self.initialize(); 
         for j in 0..self.height {
-            // println!("j: {}", j);
             for i in 0..self.width {
-                // println!("i: {}", i);
                 let mut pixel_color = Vec3::zero();
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);

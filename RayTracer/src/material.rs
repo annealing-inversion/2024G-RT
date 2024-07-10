@@ -36,7 +36,7 @@ pub struct metal {
 }
 impl metal {
     pub fn new(a: Vec3, f: f64) -> Self {
-        Self { albedo: a, fuzz: f }
+        Self { albedo: a, fuzz: f.min(1.0) }    
     }
 }
 impl Material for metal {
