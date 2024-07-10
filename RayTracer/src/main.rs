@@ -94,9 +94,6 @@ fn main() {
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
     cam.vfov = 20.0;
-    // cam.lookfrom = Vec3::new(-2.0, 2.0, 1.0);
-    // cam.lookat = Vec3::new(0.0, 0.0, -1.0);
-    // cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
