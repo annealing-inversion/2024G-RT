@@ -45,7 +45,9 @@ fn main() {
                 if choose_mat < 0.8 {
                     let albedo = Vec3::random() * Vec3::random();
                     let sphere_material = Rc::new(crate::material::lambertian::new(albedo));
-                    world.add(Rc::new(Sphere::new(center, 0.2, sphere_material)));
+                    let center2 = center + Vec3::new(0.0, random_double_range(0.0,0.5), 0.0);
+                    // world.add(Rc::new(Sphere::new(center, center2, 0.2, sphere_material)));
+                    world.add(Rc::new(Sphere::new_moving(center, center2, 0.2, sphere_material)));
                 } else if choose_mat < 0.95 {
                     let albedo = Vec3::random_with_range(0.5, 1.0);
                     let fuzz = raytracer::random_double_range(0.0, 0.5);
@@ -88,9 +90,11 @@ fn main() {
 
     let mut cam = Camera::new();
     // cam.aspect_ratio
-    cam.width = 1200;
+    // cam.width = 1200;
+    // cam.height = 800;
+    cam.width = 800;
     cam.height = 800;
-    cam.samples_per_pixel = 30;
+    cam.samples_per_pixel = 50;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
     cam.vfov = 20.0;

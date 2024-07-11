@@ -6,8 +6,10 @@ use crate::color::write_color;
 use crate::interval::Interval;
 use crate::hittable::{Hittable, hit_record};
 use crate::material::Material;
+use crate::raytracer::random_double;
 use std::fs::File;
 use std::rc::Rc;
+
 
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -71,7 +73,9 @@ impl Camera {
         let mut pixel_sample = self.pixel00_loc + self.pixel_delta_u * (i as f64 + offset.x) + self.pixel_delta_v * (j as f64 + offset.y);
         let ray_origin = if self.defocus_angle > 0.0 {self.defocus_disk_sample()} else {self.camera_center};
         let ray_direction = pixel_sample - ray_origin;
-        return Ray::new(ray_origin, ray_direction);
+        let ray_time = random_double();
+        // return Ray::new(ray_origin, ray_direction, ray_time);
+        return Ray::new_with_time(ray_origin, ray_direction, ray_time);
     }
     pub fn ray_color(&self, r: &Ray, depth: usize, world: &dyn Hittable) -> [f64; 3] {
         if depth <= 0 {
@@ -133,7 +137,16 @@ impl Camera {
         self.defocus_disk_v = self.v * defocus_radius;
         return img;
     }
+    // pub fn is_ci() -> bool {
+    //     option_env!("CI").unwrap_or_default() == "true"
+    // }
     pub fn render(&mut self, world: &dyn Hittable) -> () {
+        let bar: ProgressBar = if option_env!("CI").unwrap_or_default() == "true" {
+            ProgressBar::hidden()
+        } else {
+            ProgressBar::new((self.height * self.width) as u64)
+        };
+
         let path = "output/test.jpg";
         let AUTHOR = "name";
 
@@ -143,14 +156,13 @@ impl Camera {
                 let mut pixel_color = Vec3::zero();
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    // pixel_color += Vec3::from(self.ray_color(&r, world));
                     pixel_color += Vec3::from(self.ray_color(&r, self.max_depth, world));
                 } 
                 write_color(pixel_color * self.pixel_samples_scale, &mut img, i as usize, j as usize);
-                // bar.inc(1);
+                bar.inc(1);
             }
         }
-        // bar.finish();
+        bar.finish();
         let quality = 60;
         println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);
         let output_image: image::DynamicImage = image::DynamicImage::ImageRgb8(img);

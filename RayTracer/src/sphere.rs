@@ -6,19 +6,50 @@ pub use crate::material::Material;
 use std::rc::Rc;
 
 pub struct Sphere {
-    pub center: Vec3,
+    // pub center: Vec3,
+    pub center1: Vec3,
     pub radius: f64,
     pub mat: Rc<dyn Material>,
+    pub is_moving: bool,
+    pub center_vec: Vec3,
 }   
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
-        Self { center, radius, mat }
+    pub fn new (center: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+        Self {
+            center1: center,
+            radius,
+            mat,
+            is_moving: false,
+            center_vec: Vec3::zero(),
+        }
+    }
+    pub fn new_moving (center1: Vec3, center2: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+        Self {
+            center1,
+            radius,
+            mat,
+            is_moving: true,
+            center_vec: center2 - center1,
+        }
+    }
+    // pub fn new (center1: Vec3, center2: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+    //     Self {
+    //         center1,
+    //         radius,
+    //         mat,
+    //         is_moving: true,
+    //         center_vec: center2 - center1,
+    //     }
+    // }
+    pub fn sphere_center(&self, time: f64) -> Vec3 {
+        return self.center1 + self.center_vec * time;
     }
 }
 
 impl Hittable for Sphere {
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut hit_record) -> bool {
-        let oc = self.center - r.origin();
+        let center = if self.is_moving {self.sphere_center(r.time())} else {self.center1};
+        let oc = center - r.origin();
         let a = r.direction().dot(r.direction());
         let h = oc.dot(r.direction());
         let c = oc.dot(oc) - self.radius * self.radius;
@@ -41,7 +72,7 @@ impl Hittable for Sphere {
         }
         rec.t = root;
         rec.p = r.at(rec.t);
-        let outward_normal = (rec.p - self.center) / self.radius;
+        let outward_normal = (rec.p - center) / self.radius;
         rec.set_face_normal(r, outward_normal);
         rec.mat = Rc::clone(&self.mat);
 
