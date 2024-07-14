@@ -155,7 +155,9 @@ impl Camera {
 
         let mut img = self.initialize(); 
         for j in 0..self.height {
+            // println!("Scanlines remaining: {}", self.height - j);
             for i in 0..self.width {
+                // println!("i: {}, j: {}", i, j);
                 let mut pixel_color = Vec3::zero();
                 for sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);

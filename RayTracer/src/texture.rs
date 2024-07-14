@@ -1,5 +1,6 @@
 use crate::raytracer::*;
 use crate::vec3::Vec3;
+use crate::perlin::perlin;
 use std::rc::Rc;
 
 pub trait texture {
@@ -120,5 +121,23 @@ impl texture for image_texture {
         let b = self.data[pixel_index + 2] as f64 * color_scale;
         // println!("r: {}, g: {}, b: {}", r, g, b);
         Vec3::new(r, g, b)
+    }
+}
+
+pub struct noise_texture {
+    noise: perlin,
+}
+
+impl noise_texture {
+    pub fn new() -> Self {
+        Self {
+            noise: perlin::new(),
+        }
+    }
+}
+
+impl texture for noise_texture {
+    fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
+        Vec3::new(1.0, 1.0, 1.0) * self.noise.noise(p)
     }
 }
