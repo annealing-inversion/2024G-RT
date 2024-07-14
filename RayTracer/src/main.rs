@@ -1,3 +1,4 @@
+#![allow(warnings)]
 mod vec3;
 mod ray;
 mod hittable;
@@ -8,6 +9,9 @@ mod raytracer;
 mod interval;
 mod camera;
 mod material;
+mod aabb;
+mod bvh;
+mod texture;
 
 use std::rc::Rc;
 use vec3::*;
@@ -19,7 +23,10 @@ use color::*;
 use raytracer::*;
 use interval::*;
 use camera::*;
-
+use aabb::*;
+use bvh::*;
+use texture::*;
+use material::*;
 
 use image::{ImageBuffer, RgbImage}; //接收render传回来的图片，在main中文件输出
 use indicatif::ProgressBar;
@@ -34,8 +41,11 @@ fn is_ci() -> bool {
 fn main() {
     
     let mut world = HittableList::new();
-    let ground_material = Rc::new(crate::material::lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
-    world.add(Rc::new(Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0, ground_material)));
+
+    let checker = Rc::new(checker_texture::new_from_colors(0.32,Vec3::new(0.2, 0.3, 0.1), Vec3::new(0.9, 0.9, 0.9)));
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0, Rc::new(lambertian::new_with_texture(checker)))));
+    // let ground_material = Rc::new(crate::material::lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
+    // world.add(Rc::new(Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0, ground_material)));
 
     for a in -11..11 {
         for b in -11..11 {
@@ -68,6 +78,14 @@ fn main() {
     let material3 = Rc::new(crate::material::metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0));
     world.add(Rc::new(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3)));
 
+    // world = Rc::new(bvh_node::new(world));
+    // world = HittableList::new_from_bvh(world);
+    // world = HittableList::new_from_bvh(bvh_node::new(world));
+    let bvh = Rc::new(bvh_node::new(world));
+    let mut new_world = HittableList::new();
+    new_world.add(bvh);
+    world = new_world;
+
 
     //here
     // let material_ground = Rc::new(crate::material::lambertian::new(Vec3::new(0.8, 0.8, 0.0)));
@@ -94,7 +112,7 @@ fn main() {
     // cam.height = 800;
     cam.width = 800;
     cam.height = 800;
-    cam.samples_per_pixel = 50;
+    cam.samples_per_pixel = 30;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
     cam.vfov = 20.0;

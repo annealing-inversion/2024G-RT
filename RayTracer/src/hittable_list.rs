@@ -5,19 +5,28 @@ use crate::vec3::Vec3;
 use crate::hittable::{hit_record, Hittable};
 use std::rc::Rc;
 use std::vec::Vec;
+use crate::aabb::*;
+use crate::bvh::*;  
 
 pub struct HittableList {
     pub objects: Vec<Rc<dyn Hittable>>,
+    pub bbox: aabb,
 }
 
 impl HittableList {
     pub fn new() -> Self {
-        Self { objects: Vec::new() }
+        Self { objects: Vec::new() , bbox: aabb::empty }
     }
+    // pub fn new_from_bvh(node: bvh_node) -> Self {
+    //     let mut list = HittableList::new();
+    //     list.add(node);
+    //     list
+    // }
     pub fn clear(&mut self) {
         self.objects.clear();
     }
     pub fn add(&mut self, object: Rc<dyn Hittable>) {
+        self.bbox = aabb::new_from_aabbs(&self.bbox, &object.bounding_box());
         self.objects.push(object);
     }
 }
@@ -30,6 +39,8 @@ impl Hittable for HittableList {
             t: 0.0,
             front_face: false,
             mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
+            u: 0.0,
+            v: 0.0,     
         };
         // bool hit_anything = false;
         let mut hit_anything = false;
@@ -48,5 +59,8 @@ impl Hittable for HittableList {
             }
         }
         return hit_anything;
+    }
+    fn bounding_box(&self) -> aabb {
+        return self.bbox;
     }
 }

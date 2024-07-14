@@ -3,6 +3,7 @@ pub use crate::ray::Ray;
 pub use crate::hittable::{hit_record, Hittable};
 pub use crate::interval::Interval;
 pub use crate::material::Material;
+pub use crate::aabb::aabb;
 use std::rc::Rc;
 
 pub struct Sphere {
@@ -12,24 +13,35 @@ pub struct Sphere {
     pub mat: Rc<dyn Material>,
     pub is_moving: bool,
     pub center_vec: Vec3,
+    pub bbox: aabb,
 }   
 impl Sphere {
     pub fn new (center: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+        let rvec = Vec3::new(radius, radius, radius);
+        // self.bbox = aabb::new(center - rvec, center + rvec);
         Self {
             center1: center,
             radius,
             mat,
             is_moving: false,
             center_vec: Vec3::zero(),
+            // bbox: aabb::new(center - rvec, center + rvec),
+            bbox: aabb::new_from_points(center - rvec, center + rvec),
         }
     }
     pub fn new_moving (center1: Vec3, center2: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+        let rvec = Vec3::new(radius, radius, radius);
+        // let bbox1 = aabb::new(center1 - rvec, center1 + rvec);
+        let bbox1 = aabb::new_from_points(center1 - rvec, center1 + rvec);
+        // let bbox2 = aabb::new(center2 - rvec, center2 + rvec);
+        let bbox2 = aabb::new_from_points(center2 - rvec, center2 + rvec);
         Self {
             center1,
             radius,
             mat,
             is_moving: true,
             center_vec: center2 - center1,
+            bbox: aabb::new_from_aabbs(&bbox1, &bbox2),
         }
     }
     // pub fn new (center1: Vec3, center2: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
@@ -80,5 +92,9 @@ impl Hittable for Sphere {
         //println!("rec.mat: {:?}", rec.mat);
 
         return true;
+    }
+    fn bounding_box(&self) -> aabb {
+        // return bbox;
+        return self.bbox;
     }
 }

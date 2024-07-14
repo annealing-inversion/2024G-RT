@@ -1,6 +1,8 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::hittable::{hit_record, Hittable};
+use crate::texture::*;
+use std::rc::Rc;
 
 
 pub trait Material {
@@ -11,10 +13,15 @@ pub trait Material {
 
 pub struct lambertian {
     pub albedo: Vec3,
+    pub tex: Rc<dyn texture>,
+
 } 
 impl lambertian {
-    pub fn new(a: Vec3) -> Self {
-        Self { albedo: a }
+    pub fn new (a: Vec3) -> Self { //??
+        Self { albedo: a, tex: Rc::new(solid_color::new(a)) }
+    }
+    pub fn new_with_texture (t: Rc<dyn texture>) -> Self {
+        Self { albedo: Vec3::zero(), tex: t }
     }
 }
 impl Material for lambertian {
@@ -26,7 +33,8 @@ impl Material for lambertian {
         // *scattered = Ray::new(rec.p, scatter_direction, r_in.time());
         *scattered = Ray::new_with_time(rec.p, scatter_direction, r_in.time());
         // *scattered = Ray::new(rec.p, scatter_direction);
-        *attenuation = self.albedo;
+        // *attenuation = self.albedo;
+        *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
         return true;
     }
 }

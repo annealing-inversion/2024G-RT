@@ -87,6 +87,8 @@ impl Camera {
             t: 0.0,
             front_face: false,
             mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
+            u: 0.0,
+            v: 0.0,
         };
         if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
             let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
@@ -147,7 +149,7 @@ impl Camera {
             ProgressBar::new((self.height * self.width) as u64)
         };
 
-        let path = "output/test.jpg";
+        let path = "output2/test.jpg";
         let AUTHOR = "name";
 
         let mut img = self.initialize(); 

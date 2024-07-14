@@ -16,3 +16,8 @@ pub fn random_double_range(min: f64, max: f64) -> f64 {
     // Returns a random real in [min,max).
     min + (max - min) * random_double()
 }
+
+pub fn random_int_range(min: usize, max: usize) -> usize {
+    // Returns a random integer in [min,max].
+    rand::random::<usize>() % (max - min + 1) + min
+}

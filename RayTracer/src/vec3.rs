@@ -3,6 +3,7 @@ use std::ops::Sub;
 use std::ops::Mul;
 use std::ops::Div;
 use crate::raytracer::random_double_range;
+use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Vec3 {
@@ -100,6 +101,29 @@ impl Vec3 {
         }
     }
 
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Invalid index"),
+        }
+    }
+}
+impl IndexMut<usize> for Vec3 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("Invalid index"),
+        }
+    }
 }
 
 impl Mul for Vec3 {
