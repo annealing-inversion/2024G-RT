@@ -93,6 +93,7 @@ impl Camera {
         if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
             let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
             let mut attenuation = Vec3::zero();
+            // println!("rec.u: {}, rec.v: {}", rec.u, rec.v);
             if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
                 let tmp = attenuation * Vec3::from(self.ray_color(&scattered, depth-1, world));
                 return [tmp.x, tmp.y, tmp.z];

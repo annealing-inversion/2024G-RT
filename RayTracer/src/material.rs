@@ -34,6 +34,7 @@ impl Material for lambertian {
         *scattered = Ray::new_with_time(rec.p, scatter_direction, r_in.time());
         // *scattered = Ray::new(rec.p, scatter_direction);
         // *attenuation = self.albedo;
+        // println!("rec.u: {}, rec.v: {}", rec.u, rec.v);
         *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
         return true;
     }

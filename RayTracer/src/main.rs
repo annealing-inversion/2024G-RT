@@ -26,6 +26,7 @@ use camera::*;
 use aabb::*;
 use bvh::*;
 use texture::*;
+// use crate::texture::*;
 use material::*;
 
 use image::{ImageBuffer, RgbImage}; //接收render传回来的图片，在main中文件输出
@@ -124,12 +125,32 @@ fn checkered_spheres() {
     cam.defocus_angle = 0.0;
     cam.render(&world);
 }
-
+fn earth() {
+    let earth_texture = Rc::new(image_texture::new("earthmap.jpg"));
+    let earth_surface = Rc::new(lambertian::new_with_texture(earth_texture));
+    let globe = Rc::new(Sphere::new(Vec3::zero(), 2.0, earth_surface));
+    let mut cam = Camera::new();
+    cam.width = 800;
+    cam.height = 800;
+    cam.samples_per_pixel = 30;
+    cam.aspect_ratio = cam.width as f64 / cam.height as f64;
+    cam.max_depth = 50;
+    cam.vfov = 20.0;
+    cam.lookfrom = Vec3::new(0.0, 0.0, 12.0);
+    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    // cam.render(&HittableList::new_from_list(vec![globe]));
+    let mut world = HittableList::new();
+    world.add(globe);
+    cam.render(&world);
+}
 
 fn main() {
-    match 2 {
+    match 3 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
+        3 => earth(),
         _ => {}
     }
     

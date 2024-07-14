@@ -52,6 +52,8 @@ impl Hittable for HittableList {
 
                 rec.t = temp_rec.t;
                 rec.p = temp_rec.p;
+                rec.u = temp_rec.u;
+                rec.v = temp_rec.v;
                 rec.normal = temp_rec.normal;
                 rec.front_face = temp_rec.front_face;
                 rec.mat = Rc::clone(&temp_rec.mat);

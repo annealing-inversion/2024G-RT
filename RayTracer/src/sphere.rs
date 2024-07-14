@@ -4,6 +4,8 @@ pub use crate::hittable::{hit_record, Hittable};
 pub use crate::interval::Interval;
 pub use crate::material::Material;
 pub use crate::aabb::aabb;
+use crate::raytracer;
+// pub use crate::raytracer;
 use std::rc::Rc;
 
 pub struct Sphere {
@@ -43,6 +45,12 @@ impl Sphere {
             center_vec: center2 - center1,
             bbox: aabb::new_from_aabbs(&bbox1, &bbox2),
         }
+    }
+    pub fn get_sphere_uv(&self, p: Vec3, u: &mut f64, v: &mut f64) {
+        let theta = (-p.y).acos();
+        let phi = (-p.z).atan2(p.x) + raytracer::pi;
+        *u = phi / (2.0 * raytracer::pi);
+        *v = theta / raytracer::pi;
     }
     // pub fn new (center1: Vec3, center2: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
     //     Self {
@@ -86,6 +94,7 @@ impl Hittable for Sphere {
         rec.p = r.at(rec.t);
         let outward_normal = (rec.p - center) / self.radius;
         rec.set_face_normal(r, outward_normal);
+        self.get_sphere_uv(outward_normal, &mut rec.u, &mut rec.v);
         rec.mat = Rc::clone(&self.mat);
 
         // println!("{}",*rec.mat.as_ref());
