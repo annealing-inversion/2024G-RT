@@ -126,18 +126,26 @@ impl texture for image_texture {
 
 pub struct noise_texture {
     noise: perlin,
+    scale: f64,
 }
 
 impl noise_texture {
     pub fn new() -> Self {
         Self {
-            noise: perlin::new(),
+            noise: perlin::new(), 
+            scale: 1.0,
         }
     }
+    pub fn new_with_scale(s: f64) -> Self {
+        Self {
+            noise: perlin::new(),
+            scale: s,
+        }
+    }   
 }
 
 impl texture for noise_texture {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
-        Vec3::new(1.0, 1.0, 1.0) * self.noise.noise(p)
+        Vec3::new(1.0, 1.0, 1.0) * self.noise.noise(&(*p * self.scale))
     }
 }
