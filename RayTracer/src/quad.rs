@@ -2,6 +2,7 @@
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::hittable::{hit_record, Hittable};
+use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::material::Material;
 use crate::aabb::aabb;
@@ -42,6 +43,23 @@ impl Quad {
         rec.u = alpha;
         rec.v = beta;
         return true;
+    }
+    pub fn boxx(a: Vec3, b:Vec3, mat: Rc<dyn Material>) -> Rc<HittableList> {
+        let mut sides = HittableList::new();
+        let min = Vec3::new(a.x.min(b.x), a.y.min(b.y), a.z.min(b.z));
+        let max = Vec3::new(a.x.max(b.x), a.y.max(b.y), a.z.max(b.z));
+        let dx = Vec3::new(max.x - min.x, 0.0, 0.0);
+        let dy = Vec3::new(0.0, max.y - min.y, 0.0);
+        let dz = Vec3::new(0.0, 0.0, max.z - min.z);
+
+        sides.add(Rc::new(Quad::new(Vec3::new(min.x, min.y, max.z), dx, dy, mat.clone())));
+        sides.add(Rc::new(Quad::new(Vec3::new(max.x, min.y, max.z), dz * -1.0, dy, mat.clone())));
+        sides.add(Rc::new(Quad::new(Vec3::new(max.x, min.y, min.z), dx * -1.0, dy, mat.clone())));
+        sides.add(Rc::new(Quad::new(Vec3::new(min.x, min.y, min.z), dz, dy, mat.clone())));
+        sides.add(Rc::new(Quad::new(Vec3::new(min.x, max.y, max.z), dx, dz * -1.0, mat.clone())));
+        sides.add(Rc::new(Quad::new(Vec3::new(min.x, min.y, min.z), dx, dz, mat.clone())));
+
+        Rc::new(sides)
     }
 
 }

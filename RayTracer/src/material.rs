@@ -9,6 +9,9 @@ pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &hit_record, attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
         false
     }
+    fn emitted(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
+        Vec3::zero()
+    }
 }
 
 pub struct lambertian {
@@ -97,5 +100,27 @@ impl Material for dielectric {
         *scattered = Ray::new_with_time(rec.p, direction, r_in.time());
 
         return true;
+    }
+}
+
+pub struct diffuse_light {
+    pub tex: Rc<dyn texture>,
+}
+
+impl diffuse_light {
+    pub fn new(t: Rc<dyn texture>) -> Self {
+        Self { tex: t }
+    }
+    pub fn new_from_emit_color(c: Vec3) -> Self {
+        Self { tex: Rc::new(solid_color::new(c)) }
+    }
+}
+
+impl Material for diffuse_light {
+    fn scatter(&self, r_in: &Ray, rec: &hit_record, attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
+        false
+    }
+    fn emitted(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
+        self.tex.value(u, v, p)
     }
 }

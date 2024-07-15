@@ -33,6 +33,7 @@ pub struct Camera {
     pub focus_dist: f64,
     pub defocus_disk_u: Vec3,
     pub defocus_disk_v: Vec3,
+    pub background: Vec3,
 }
 
 impl Camera {
@@ -59,6 +60,7 @@ impl Camera {
             focus_dist: 10.0,
             defocus_disk_u: Vec3::zero(),
             defocus_disk_v: Vec3::zero(),
+            background: Vec3::zero(),
         }
     }
     pub fn defocus_disk_sample(&self) -> Vec3 {
@@ -90,22 +92,17 @@ impl Camera {
             u: 0.0,
             v: 0.0,
         };
-        if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
-            let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
-            let mut attenuation = Vec3::zero();
-            // println!("rec.u: {}, rec.v: {}", rec.u, rec.v);
-            if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
-                let tmp = attenuation * Vec3::from(self.ray_color(&scattered, depth-1, world));
-                return [tmp.x, tmp.y, tmp.z];
-            }
-            else {
-                return [0.0, 0.0, 0.0];
-            }
+        if !world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
+            return [self.background.x, self.background.y, self.background.z];
         }
-        let unit_direction = r.direction().normalize();
-        let a = 0.5 * (unit_direction.y + 1.0);
-        let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3::new(0.5, 0.7, 1.0) * a;
-        return [color.x, color.y, color.z];
+        let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
+        let mut attenuation = Vec3::zero(); 
+        let mut color_from_emission = rec.mat.emitted(rec.u, rec.v, &rec.p);
+        if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+            return [color_from_emission.x, color_from_emission.y, color_from_emission.z];
+        }
+        let color_from_scatter = Vec3::from(self.ray_color(&scattered, depth-1, world)) * attenuation;
+        return [color_from_emission.x + color_from_scatter.x, color_from_emission.y + color_from_scatter.y, color_from_emission.z + color_from_scatter.z];
     }
 
     pub fn initialize(&mut self) -> RgbImage {

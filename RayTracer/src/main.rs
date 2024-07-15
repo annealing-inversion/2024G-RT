@@ -97,6 +97,7 @@ fn bouncing_spheres() {
     cam.samples_per_pixel = 30;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
+    cam.background = Vec3::new(0.7, 0.8, 1.0);
     cam.vfov = 20.0;
     cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
@@ -123,6 +124,7 @@ fn checkered_spheres() {
     cam.samples_per_pixel = 10;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
+    cam.background = Vec3::new(0.7, 0.8, 1.0);
     cam.vfov = 20.0;
     cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
@@ -140,6 +142,7 @@ fn earth() {
     cam.samples_per_pixel = 30;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
+    cam.background = Vec3::new(0.7, 0.8, 1.0);
     cam.vfov = 20.0;
     cam.lookfrom = Vec3::new(0.0, 0.0, 12.0);
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
@@ -162,6 +165,7 @@ fn perlin_spheres() {
     cam.samples_per_pixel = 10;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
+    cam.background = Vec3::new(0.7, 0.8, 1.0);
     cam.vfov = 20.0;
     cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
@@ -191,6 +195,7 @@ fn quads() {
     cam.samples_per_pixel = 10;
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
+    cam.background = Vec3::new(0.7, 0.8, 1.0);
     cam.vfov = 80.0;
     cam.lookfrom = Vec3::new(0.0, 0.0, 9.0);
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
@@ -198,14 +203,72 @@ fn quads() {
     cam.defocus_angle = 0.0;
     cam.render(&world);
 }
+fn simple_light() {
+    let mut world = HittableList::new();
+    let pertext = Rc::new(noise_texture::new_with_scale(4.0));
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0, Rc::new(lambertian::new_with_texture(pertext.clone())))));
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, 2.0, 0.0), 2.0, Rc::new(lambertian::new_with_texture(pertext.clone()))))); 
+    let difflight = Rc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, 7.0, 0.0), 2.0, difflight.clone())));  
+    world.add(Rc::new(Quad::new(Vec3::new(3.0,1.0,-2.0), Vec3::new(2.0, 0.0, 0.0), Vec3::new(0.0, 2.0, 0.0), difflight.clone())));
+    let mut cam = Camera::new();
+    cam.width = 800;
+    cam.height = 800;
+    cam.samples_per_pixel = 10;
+    cam.aspect_ratio = cam.width as f64 / cam.height as f64;
+    cam.max_depth = 50;
+    cam.background = Vec3::new(0.0, 0.0, 0.0);
+    cam.vfov = 20.0;
+    cam.lookfrom = Vec3::new(26.0, 3.0, 6.0);
+    cam.lookat = Vec3::new(0.0, 2.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    cam.render(&world);
+}
+fn cornell_box() {
+    let mut world = HittableList::new();
+    let red = Rc::new(lambertian::new(Vec3::new(0.65, 0.05, 0.05)));
+    let white = Rc::new(lambertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    let green = Rc::new(lambertian::new(Vec3::new(0.12, 0.45, 0.15)));
+    let light = Rc::new(diffuse_light::new_from_emit_color(Vec3::new(15.0, 15.0, 15.0)));
+
+    world.add(Rc::new(Quad::new(Vec3::new(555.0, 0.0, 0.0), Vec3::new(0.0, 555.0, 0.0), Vec3::new(0.0, 0.0, 555.0), green.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 555.0, 0.0), Vec3::new(0.0,0.0, 555.0), red.clone())));    
+    world.add(Rc::new(Quad::new(Vec3::new(343.0,554.0,332.0), Vec3::new(-130.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -105.0), light.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(555.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 555.0), white.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(555.0,555.0,555.0),Vec3::new(-555.0,0.0,0.0),Vec3::new(0.0,0.0,-555.0), white.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(0.0,0.0,555.0),Vec3::new(555.0,0.0,0.0),Vec3::new(0.0,555.0,0.0), white.clone())));
+    
+    world.add(Quad::boxx(Vec3::new(130.0,0.0,65.0),Vec3::new(295.0,165.0,230.0),white.clone()));
+    world.add(Quad::boxx(Vec3::new(265.0,0.0,295.0),Vec3::new(430.0,330.0,460.0),white.clone())); 
+
+    let mut cam = Camera::new();
+
+    cam.width = 800;
+    cam.height = 800;
+    cam.samples_per_pixel = 50;
+    cam.aspect_ratio = cam.width as f64 / cam.height as f64;
+    cam.max_depth = 50;
+    cam.background = Vec3::new(0.0, 0.0, 0.0);
+    cam.vfov = 40.0;
+    cam.lookfrom = Vec3::new(278.0, 278.0, -800.0);
+    cam.lookat = Vec3::new(278.0, 278.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    cam.render(&world);
+
+}
+
 
 fn main() {
-    match 5 {
+    match 7 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => perlin_spheres(),
         5 => quads(),
+        6 => simple_light(),
+        7 => cornell_box(),
         _ => {}
     }
     
