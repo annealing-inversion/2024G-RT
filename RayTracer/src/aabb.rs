@@ -10,7 +10,13 @@ pub struct aabb {
 }
 impl aabb {
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
-        Self { x, y, z }
+        let mut tmp = Self::empty;
+        tmp.x = x;
+        tmp.y = y;
+        tmp.z = z;
+        tmp.pad_to_minimums();
+        // Self { x, y, z }
+        tmp
     }
     pub const empty: aabb = aabb {
         x: Interval::empty,
@@ -23,10 +29,26 @@ impl aabb {
         z: Interval::universe,
     };
     pub fn new_from_points(p0: Vec3, p1: Vec3) -> Self {
-        let x = if p0.x < p1.x { Interval::new(p0.x, p1.x) } else { Interval::new(p1.x, p0.x) };
-        let y = if p0.y < p1.y { Interval::new(p0.y, p1.y) } else { Interval::new(p1.y, p0.y) };
-        let z = if p0.z < p1.z { Interval::new(p0.z, p1.z) } else { Interval::new(p1.z, p0.z) };
-        Self { x, y, z }
+        // let x = if p0.x < p1.x { Interval::new(p0.x, p1.x) } else { Interval::new(p1.x, p0.x) };
+        // let y = if p0.y < p1.y { Interval::new(p0.y, p1.y) } else { Interval::new(p1.y, p0.y) };
+        // let z = if p0.z < p1.z { Interval::new(p0.z, p1.z) } else { Interval::new(p1.z, p0.z) };
+        // Self::pad_to_minimums();
+        // Self { x, y, z }
+        let mut tmp = Self::empty;
+        tmp.x = if p0.x < p1.x { Interval::new(p0.x, p1.x) } else { Interval::new(p1.x, p0.x) };
+        tmp.y = if p0.y < p1.y { Interval::new(p0.y, p1.y) } else { Interval::new(p1.y, p0.y) };
+        tmp.z = if p0.z < p1.z { Interval::new(p0.z, p1.z) } else { Interval::new(p1.z, p0.z) };
+        tmp.pad_to_minimums();
+        tmp
+    }
+    pub fn pad_to_minimums(&mut self) {
+        let delta = 0.0001;
+        if self.x.size() < delta { self.x = self.x.expand(delta); }
+        if self.y.size() < delta { self.y = self.y.expand(delta); }
+        if self.z.size() < delta { self.z = self.z.expand(delta); }
+        // if x.size() < delta x = x.expand(delta);
+        // if y.size() < delta y = y.expand(delta);
+        // if z.size() < delta z = z.expand(delta);
     }
     pub fn new_from_aabbs(box0: &aabb, box1: &aabb) -> Self {
         let x = Interval::new_from_intervals(&box0.x, &box1.x);

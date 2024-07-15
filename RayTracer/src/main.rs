@@ -13,6 +13,7 @@ mod aabb;
 mod bvh;
 mod texture;
 mod perlin;
+mod quad;
 
 use std::rc::Rc;
 use vec3::*;
@@ -30,6 +31,8 @@ use texture::*;
 // use crate::texture::*;
 use material::*;
 use perlin::*;
+use quad::Quad;
+// use quad::quad;
 
 use image::{ImageBuffer, RgbImage}; //接收render传回来的图片，在main中文件输出
 use indicatif::ProgressBar;
@@ -168,13 +171,41 @@ fn perlin_spheres() {
     cam.render(&world);
 }
 
+fn quads() {
+    let mut world = HittableList::new();
+    let left_red = Rc::new(lambertian::new(Vec3::new(1.0, 0.2, 0.2)));
+    let back_green = Rc::new(lambertian::new(Vec3::new(0.2, 1.0, 0.2)));
+    let right_blue = Rc::new(lambertian::new(Vec3::new(0.2, 0.2, 1.0)));
+    let upper_orange = Rc::new(lambertian::new(Vec3::new(1.0, 0.5, 0.0)));
+    let lower_teal = Rc::new(lambertian::new(Vec3::new(0.2, 0.8, 0.8)));
+
+    world.add(Rc::new(Quad::new(Vec3::new(-3.0,-2.0,5.0), Vec3::new(0.0, 0.0, -4.0), Vec3::new(0.0, 4.0, 0.0), left_red.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(-2.0,-2.0,0.0), Vec3::new(4.0, 0.0, 0.0), Vec3::new(0.0, 4.0, 0.0), back_green.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(3.0,-2.0,1.0), Vec3::new(0.0, 0.0, 4.0), Vec3::new(0.0, 4.0, 0.0), right_blue.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(-2.0,3.0,1.0), Vec3::new(4.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 4.0), upper_orange.clone())));
+    world.add(Rc::new(Quad::new(Vec3::new(-2.0,-3.0,5.0), Vec3::new(4.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -4.0), lower_teal.clone())));
+
+    let mut cam = Camera::new();
+    cam.width = 800;
+    cam.height = 800;
+    cam.samples_per_pixel = 10;
+    cam.aspect_ratio = cam.width as f64 / cam.height as f64;
+    cam.max_depth = 50;
+    cam.vfov = 80.0;
+    cam.lookfrom = Vec3::new(0.0, 0.0, 9.0);
+    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    cam.render(&world);
+}
 
 fn main() {
-    match 4 {
+    match 5 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => perlin_spheres(),
+        5 => quads(),
         _ => {}
     }
     
