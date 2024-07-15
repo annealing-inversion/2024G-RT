@@ -68,6 +68,7 @@ impl Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut hit_record) -> bool {
+        // println!("ray_t.min: {}, ray_t.max: {}", ray_t.min, ray_t.max);
         let center = if self.is_moving {self.sphere_center(r.time())} else {self.center1};
         let oc = center - r.origin();
         let a = r.direction().dot(r.direction());
@@ -79,17 +80,20 @@ impl Hittable for Sphere {
             return false;
         }
         let sqrtd = discriminant.sqrt();
-
-        let root = (h - sqrtd) / a;
-        if root <= 0.003 {
+        let mut root = (h - sqrtd) / a;
+        // println!("root1: {}", root);
+        // println!("ray_t.min: {}, ray_t.max: {}", ray_t.min, ray_t.max);
+        // println!("whether: {}", ray_t.surrounds(root));
+        if root <= 0.0001 {
             return false;
         }
         if !ray_t.surrounds(root) {
-            let root = (h + sqrtd) / a;
+            root = (h + sqrtd) / a;
             if !ray_t.surrounds(root) {
                 return false;
             }
         }
+        // println!("root2: {}", root);
         rec.t = root;
         rec.p = r.at(rec.t);
         let outward_normal = (rec.p - center) / self.radius;

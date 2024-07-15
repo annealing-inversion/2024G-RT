@@ -76,8 +76,6 @@ pub struct image_texture {
 
 impl image_texture {
     pub fn new(filename: &str) -> Self {
-        // let bytes_per_scanline: u32 = 3;
-        // println!("Loading image: {}", filename);
 
         let bytes_per_pixel = 3;
         let img = image::open(filename).unwrap().to_rgb8();

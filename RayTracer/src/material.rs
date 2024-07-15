@@ -124,3 +124,22 @@ impl Material for diffuse_light {
         self.tex.value(u, v, p)
     }
 }
+
+pub struct Isotropic {
+    pub tex: Rc<dyn texture>,
+}
+impl Isotropic {
+    pub fn new(t: Rc<dyn texture>) -> Self {
+        Self { tex: t }
+    }
+    pub fn new_from_color(c: Vec3) -> Self {
+        Self { tex: Rc::new(solid_color::new(c)) }
+    }
+}
+impl Material for Isotropic {
+    fn scatter(&self, r_in: &Ray, rec: &hit_record, attenuation: &mut Vec3, scattered: &mut Ray) -> bool {
+        *scattered = Ray::new_with_time(rec.p, Vec3::random_unit_vector(), r_in.time());
+        *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
+        return true;
+    }
+}

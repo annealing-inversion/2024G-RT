@@ -1,3 +1,6 @@
+use crate::vec3::Vec3;
+use std::ops::Add;
+
 #[derive(Clone, Copy)]
 pub struct Interval {
     pub min: f64,
@@ -39,5 +42,13 @@ impl Interval {
     pub fn expand(&self, delta: f64) -> Self {
         let padding = delta * 0.5;
         Self::new(self.min - padding, self.max + padding)
+    }
+}
+
+impl Add<f64> for Interval {
+    type Output = Interval;
+
+    fn add(self, discriminant:f64) -> Interval {
+        Interval { min: self.min + discriminant, max: self.max + discriminant }
     }
 }
