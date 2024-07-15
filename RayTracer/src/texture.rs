@@ -146,6 +146,9 @@ impl noise_texture {
 
 impl texture for noise_texture {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
-        Vec3::new(1.0, 1.0, 1.0) * self.noise.noise(&(*p * self.scale))
+        // Vec3::new(1.0, 1.0, 1.0) * self.noise.noise(&(*p * self.scale))
+        // Vec3::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + self.noise.noise(&(*p * self.scale)))
+        // Vec3::new(1.0, 1.0, 1.0) * self.noise.turb(p, 7)
+        Vec3::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z + 10.0 * self.noise.turb(p, 7)).sin())
     }
 }
