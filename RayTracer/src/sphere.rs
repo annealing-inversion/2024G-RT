@@ -7,18 +7,19 @@ pub use crate::aabb::aabb;
 use crate::raytracer;
 // pub use crate::raytracer;
 use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct Sphere {
     // pub center: Vec3,
     pub center1: Vec3,
     pub radius: f64,
-    pub mat: Rc<dyn Material>,
+    pub mat: Arc<dyn Material + Send + Sync>,
     pub is_moving: bool,
     pub center_vec: Vec3,
     pub bbox: aabb,
 }   
 impl Sphere {
-    pub fn new (center: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+    pub fn new (center: Vec3, radius: f64, mat: Arc<dyn Material + Send + Sync>) -> Self {
         let rvec = Vec3::new(radius, radius, radius);
         // self.bbox = aabb::new(center - rvec, center + rvec);
         Self {
@@ -31,7 +32,7 @@ impl Sphere {
             bbox: aabb::new_from_points(center - rvec, center + rvec),
         }
     }
-    pub fn new_moving (center1: Vec3, center2: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+    pub fn new_moving (center1: Vec3, center2: Vec3, radius: f64, mat: Arc<dyn Material + Send + Sync>) -> Self {
         let rvec = Vec3::new(radius, radius, radius);
         // let bbox1 = aabb::new(center1 - rvec, center1 + rvec);
         let bbox1 = aabb::new_from_points(center1 - rvec, center1 + rvec);
@@ -52,7 +53,7 @@ impl Sphere {
         *u = phi / (2.0 * raytracer::pi);
         *v = theta / raytracer::pi;
     }
-    // pub fn new (center1: Vec3, center2: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+    // pub fn new (center1: Vec3, center2: Vec3, radius: f64, mat: Arc<dyn Material>) -> Self {
     //     Self {
     //         center1,
     //         radius,
@@ -84,7 +85,7 @@ impl Hittable for Sphere {
         // println!("root1: {}", root);
         // println!("ray_t.min: {}, ray_t.max: {}", ray_t.min, ray_t.max);
         // println!("whether: {}", ray_t.surrounds(root));
-        
+
         // if root <= 0.00005 {
         //     return false;
         // }
@@ -100,7 +101,7 @@ impl Hittable for Sphere {
         let outward_normal = (rec.p - center) / self.radius;
         rec.set_face_normal(r, outward_normal);
         self.get_sphere_uv(outward_normal, &mut rec.u, &mut rec.v);
-        rec.mat = Rc::clone(&self.mat);
+        rec.mat = Arc::clone(&self.mat);
 
         // println!("{}",*rec.mat.as_ref());
         //println!("rec.mat: {:?}", rec.mat);

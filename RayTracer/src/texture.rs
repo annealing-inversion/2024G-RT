@@ -2,6 +2,7 @@ use crate::raytracer::*;
 use crate::vec3::Vec3;
 use crate::perlin::perlin;
 use std::rc::Rc;
+use std::sync::Arc;
 
 pub trait texture {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3;
@@ -28,12 +29,12 @@ impl texture for solid_color {
 
 pub struct checker_texture {
     inv_scale: f64,
-    even: Rc<dyn texture>,
-    odd: Rc<dyn texture>,
+    even: Arc<dyn texture + Send + Sync>,
+    odd: Arc<dyn texture + Send + Sync>,
 }
 
 impl checker_texture {
-    pub fn new(scale: f64, even: Rc<dyn texture>, odd: Rc<dyn texture>) -> Self {
+    pub fn new(scale: f64, even: Arc<dyn texture + Send + Sync>, odd: Arc<dyn texture + Send + Sync>) -> Self {
         Self {
             inv_scale: 1.0 / scale,
             even,
@@ -43,10 +44,10 @@ impl checker_texture {
     pub fn new_from_colors(scale: f64, c1: Vec3, c2: Vec3) -> Self {
         Self {
             inv_scale: 1.0 / scale,
-            even: Rc::new(solid_color::new(c1)),
-            odd: Rc::new(solid_color::new(c2)),
-            // odd: Rc::new(solid_color::new(c1)),
-            // even: Rc::new(solid_color::new(c2)),
+            even: Arc::new(solid_color::new(c1)),
+            odd: Arc::new(solid_color::new(c2)),
+            // odd: Arc::new(solid_color::new(c1)),
+            // even: Arc::new(solid_color::new(c2)),
         }
     }
 }

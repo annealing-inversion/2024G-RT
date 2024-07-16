@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::sync::Arc;
 use crate::hittable::{Hittable, hit_record};
 use crate::material::Material;
 // use crate::texture::Texture;
@@ -11,25 +12,25 @@ use crate::material::Isotropic;
 use crate::raytracer;
 
 pub struct constant_medium {
-    pub boundary: Rc<dyn Hittable>,
+    pub boundary: Arc<dyn Hittable + Send + Sync>,
     pub neg_inv_density: f64,
-    pub phase_function: Rc<dyn Material>,
+    pub phase_function: Arc<dyn Material + Send + Sync>,
 }
 
 impl constant_medium {
-    pub fn new(b: Rc<dyn Hittable>, d: f64, a: Rc<dyn texture>) -> Self {
+    pub fn new(b: Arc<dyn Hittable + Send + Sync>, d: f64, a: Arc<dyn texture + Send + Sync>) -> Self {
         constant_medium {
             boundary: b,
             neg_inv_density: -1.0 / d,
-            phase_function: Rc::new(Isotropic::new(a)),
+            phase_function: Arc::new(Isotropic::new(a)),
         }
     }
-    pub fn new_from_color(b: Rc<dyn Hittable>, d: f64, c: Vec3) -> Self {
+    pub fn new_from_color(b: Arc<dyn Hittable + Send + Sync>, d: f64, c: Vec3) -> Self {
         // println!("constant_medium::new_from_color");
         constant_medium {
             boundary: b,
             neg_inv_density: -1.0 / d,
-            phase_function: Rc::new(Isotropic::new_from_color(c)),
+            phase_function: Arc::new(Isotropic::new_from_color(c)),
         }
         
     }
@@ -44,7 +45,7 @@ impl Hittable for constant_medium {
             normal: Vec3::zero(),
             t: 0.0,
             front_face: false,
-            mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
+            mat: Arc::new(crate::material::lambertian::new(Vec3::zero())),
             u: 0.0,
             v: 0.0,
         };
@@ -54,7 +55,7 @@ impl Hittable for constant_medium {
             normal: Vec3::zero(),
             t: 0.0,
             front_face: false,
-            mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
+            mat: Arc::new(crate::material::lambertian::new(Vec3::zero())),
             u: 0.0,
             v: 0.0,
         };

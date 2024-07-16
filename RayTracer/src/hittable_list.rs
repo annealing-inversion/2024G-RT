@@ -4,12 +4,13 @@ use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::hittable::{hit_record, Hittable};
 use std::rc::Rc;
+use std::sync::Arc;
 use std::vec::Vec;
 use crate::aabb::*;
 use crate::bvh::*;  
 
 pub struct HittableList {
-    pub objects: Vec<Rc<dyn Hittable>>,
+    pub objects: Vec<Arc<dyn Hittable + Send + Sync>>,
     pub bbox: aabb,
 }
 
@@ -25,7 +26,7 @@ impl HittableList {
     pub fn clear(&mut self) {
         self.objects.clear();
     }
-    pub fn add(&mut self, object: Rc<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable + Send + Sync>) {
         self.bbox = aabb::new_from_aabbs(&self.bbox, &object.bounding_box());
         self.objects.push(object);
     }
@@ -38,7 +39,7 @@ impl Hittable for HittableList {
             normal: Vec3::zero(),
             t: 0.0,
             front_face: false,
-            mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
+            mat: Arc::new(crate::material::lambertian::new(Vec3::zero())),
             u: 0.0,
             v: 0.0,     
         };
@@ -56,7 +57,7 @@ impl Hittable for HittableList {
                 rec.v = temp_rec.v;
                 rec.normal = temp_rec.normal;
                 rec.front_face = temp_rec.front_face;
-                rec.mat = Rc::clone(&temp_rec.mat);
+                rec.mat = Arc::clone(&temp_rec.mat);
 
             }
         }

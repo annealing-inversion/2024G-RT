@@ -4,7 +4,7 @@ use crate::hittable::{hit_record, Hittable};
 use crate::texture::*;
 use crate::raytracer::random_double;
 use std::rc::Rc;
-
+use std::sync::Arc;
 
 
 pub trait Material {
@@ -18,14 +18,14 @@ pub trait Material {
 
 pub struct lambertian {
     pub albedo: Vec3,
-    pub tex: Rc<dyn texture>,
+    pub tex: Arc<dyn texture + Send + Sync>,
 
 } 
 impl lambertian {
     pub fn new (a: Vec3) -> Self { //??
-        Self { albedo: a, tex: Rc::new(solid_color::new(a)) }
+        Self { albedo: a, tex: Arc::new(solid_color::new(a)) }
     }
-    pub fn new_with_texture (t: Rc<dyn texture>) -> Self {
+    pub fn new_with_texture (t: Arc<dyn texture + Send + Sync>) -> Self {
         Self { albedo: Vec3::zero(), tex: t }
     }
 }
@@ -108,15 +108,15 @@ impl Material for dielectric {
 }
 
 pub struct diffuse_light {
-    pub tex: Rc<dyn texture>,
+    pub tex: Arc<dyn texture + Send + Sync>,
 }
 
 impl diffuse_light {
-    pub fn new(t: Rc<dyn texture>) -> Self {
+    pub fn new(t: Arc<dyn texture + Send + Sync>) -> Self {
         Self { tex: t }
     }
     pub fn new_from_emit_color(c: Vec3) -> Self {
-        Self { tex: Rc::new(solid_color::new(c)) }
+        Self { tex: Arc::new(solid_color::new(c)) }
     }
 }
 
@@ -130,14 +130,14 @@ impl Material for diffuse_light {
 }
 
 pub struct Isotropic {
-    pub tex: Rc<dyn texture>,
+    pub tex: Arc<dyn texture + Send + Sync>,
 }
 impl Isotropic {
-    pub fn new(t: Rc<dyn texture>) -> Self {
+    pub fn new(t: Arc<dyn texture + Send + Sync>) -> Self {
         Self { tex: t }
     }
     pub fn new_from_color(c: Vec3) -> Self {
-        Self { tex: Rc::new(solid_color::new(c)) }
+        Self { tex: Arc::new(solid_color::new(c)) }
     }
 }
 impl Material for Isotropic {

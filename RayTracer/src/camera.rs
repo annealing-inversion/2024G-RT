@@ -9,6 +9,15 @@ use crate::material::Material;
 use crate::raytracer::random_double;
 use std::fs::File;
 use std::rc::Rc;
+use std::sync::Arc;
+use crossbeam::thread;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Mutex, Condvar};
+use indicatif::{ProgressStyle};
+
+const HEIGHT_PARTITION: usize = 20;
+const WIDTH_PARTITION: usize = 20;
+const THREAD_LIMIT: usize = 16;
 
 
 pub struct Camera {
@@ -76,10 +85,9 @@ impl Camera {
         let ray_origin = if self.defocus_angle > 0.0 {self.defocus_disk_sample()} else {self.camera_center};
         let ray_direction = pixel_sample - ray_origin;
         let ray_time = random_double();
-        // return Ray::new(ray_origin, ray_direction, ray_time);
         return Ray::new_with_time(ray_origin, ray_direction, ray_time);
     }
-    pub fn ray_color(&self, r: &Ray, depth: usize, world: &dyn Hittable) -> [f64; 3] {
+    pub fn ray_color(&self, r: &Ray, depth: usize, world: Arc<dyn Hittable + Send + Sync>) -> [f64; 3] {
         if depth <= 0 {
             return [0.0, 0.0, 0.0];
         }
@@ -88,7 +96,7 @@ impl Camera {
             normal: Vec3::zero(),
             t: 0.0,
             front_face: false,
-            mat: Rc::new(crate::material::lambertian::new(Vec3::zero())),
+            mat: Arc::new(crate::material::lambertian::new(Vec3::zero())),
             u: 0.0,
             v: 0.0,
         };
@@ -137,34 +145,117 @@ impl Camera {
         self.defocus_disk_v = self.v * defocus_radius;
         return img;
     }
-    // pub fn is_ci() -> bool {
-    //     option_env!("CI").unwrap_or_default() == "true"
+    // pub fn render(&mut self, world: &dyn Hittable) -> () {
+    //     let bar: ProgressBar = if option_env!("CI").unwrap_or_default() == "true" {
+    //         ProgressBar::hidden()
+    //     } else {
+    //         ProgressBar::new((self.height * self.width) as u64)
+    //     };
+
+    //     let path = "output2/test.jpg";
+    //     let AUTHOR = "name";
+
+    //     let mut img = self.initialize(); 
+    //     for j in 0..self.height {
+    //         for i in 0..self.width {
+    //             let mut pixel_color = Vec3::zero();
+    //             for sample in 0..self.samples_per_pixel {
+    //                 let r = self.get_ray(i, j);
+    //                 pixel_color += Vec3::from(self.ray_color(&r, self.max_depth, world));
+    //             } 
+    //             write_color(pixel_color * self.pixel_samples_scale, &mut img, i as usize, j as usize);
+    //             bar.inc(1);
+    //         }
+    //     }
+    //     bar.finish();
+    //     let quality = 60;
+    //     println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);
+    //     let output_image: image::DynamicImage = image::DynamicImage::ImageRgb8(img);
+    //     let mut output_file: File = File::create(path).unwrap();
+    //     match output_image.write_to(&mut output_file, image::ImageOutputFormat::Jpeg(quality)) {
+    //         Ok(_) => {}
+    //         Err(_) => println!("Outputting image fails."),
+    //     }
     // }
-    pub fn render(&mut self, world: &dyn Hittable) -> () {
+    pub fn get_ProgressBar(height: usize, width: usize) -> ProgressBar {
         let bar: ProgressBar = if option_env!("CI").unwrap_or_default() == "true" {
-            ProgressBar::hidden()
-        } else {
-            ProgressBar::new((self.height * self.width) as u64)
-        };
+         ProgressBar::hidden()
+         } else {
+         ProgressBar::new((height * width) as u64)
+         };
+        
+         bar.set_style(ProgressStyle::default_bar()
+         .template("{spinner:.green} Elapsed {elapsed_precise} [{wide_bar:.cyan/blue}] {pos}/{len} ({eta}) {msg}")
+         .progress_chars("●▸▹⋅"));
+        
+         bar
+    }
+    pub fn render(&mut self, world: Arc<dyn Hittable + Send + Sync>) -> () {
+        // let bar: ProgressBar = if option_env!("CI").unwrap_or_default() == "true" {
+        //     ProgressBar::hidden()
+        // } else {
+        //     ProgressBar::new((self.height * self.width) as u64)
+        // };
+        let bar = Self::get_ProgressBar(self.height, self.width);
+
 
         let path = "output2/test.jpg";
         let AUTHOR = "name";
 
         let mut img = self.initialize(); 
-        for j in 0..self.height {
-            // println!("Scanlines remaining: {}", self.height - j);
-            for i in 0..self.width {
-                // println!("i: {}, j: {}", i, j);
-                let mut pixel_color = Vec3::zero();
-                for sample in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    pixel_color += Vec3::from(self.ray_color(&r, self.max_depth, world));
-                } 
-                write_color(pixel_color * self.pixel_samples_scale, &mut img, i as usize, j as usize);
-                bar.inc(1);
+        let img_mtx = Arc::new(Mutex::new(&mut img));
+        let camera_wrapper = Arc::new(self);
+        let bar = Arc::new(bar);
+        let bar_wrapper = Arc::clone(&bar);
+        
+        thread::scope(move |thd_spawner|{
+            let thread_count = Arc::new(AtomicUsize::new(0));
+            let thread_number_controller = Arc::new(Condvar::new());
+      
+            let chunk_width = (camera_wrapper.width + WIDTH_PARTITION - 1) / WIDTH_PARTITION;
+            let chunk_height = (camera_wrapper.height + HEIGHT_PARTITION - 1) / HEIGHT_PARTITION;
+            
+            for j in 0..HEIGHT_PARTITION {
+              for i in 0..WIDTH_PARTITION {
+                // WAIT
+                let lock_for_condv = Mutex::new(false);
+                let mut thread_number_controller = thread_number_controller.clone();
+                let mut thread_count = thread_count.clone();
+
+                while !(thread_count.load(Ordering::SeqCst) < THREAD_LIMIT) { // outstanding thread number control
+                  thread_number_controller.wait(lock_for_condv.lock().unwrap()).unwrap();
+                }
+                // ... // some Arc::clone(..._wrapper)        
+                let camera = Arc::clone(&camera_wrapper);
+                let world = Arc::clone(&world);
+                let bar = Arc::clone(&bar_wrapper);
+                let img_mtx = Arc::clone(&img_mtx);
+                
+                // move "thread_count++" out of child thread, so that it's sequential with thread number control code
+                thread_count.fetch_add(1, Ordering::SeqCst);
+                bar.set_message(format!("|{} threads outstanding|", thread_count.load(Ordering::SeqCst))); // set "thread_count" information to progress bar
+      
+                let _ = thd_spawner.spawn(move |_| {
+                  camera.render_sub(&world, &img_mtx, &bar, 
+                    i * chunk_width, (i + 1) * chunk_width, 
+                    j * chunk_height, (j + 1) * chunk_height);
+      
+                  thread_count.fetch_sub(1, Ordering::SeqCst); // subtract first, then notify.
+
+                  let mut thread_number_controller = thread_number_controller.clone();
+                //   let mut bar
+                  bar.set_message(format!("|{} threads outstanding|", thread_count.load(Ordering::SeqCst)));
+                  // NOTIFY
+                  thread_number_controller.notify_one();
+                });
+      
+              }
             }
-        }
+        }).unwrap();
+        // let bar = Arc::clone(&bar);
+        // bar_wrapper.finish();
         bar.finish();
+
         let quality = 60;
         println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);
         let output_image: image::DynamicImage = image::DynamicImage::ImageRgb8(img);
@@ -174,4 +265,32 @@ impl Camera {
             Err(_) => println!("Outputting image fails."),
         }
     }
+    pub fn render_sub(&self, world: &Arc<dyn Hittable + Send + Sync>, img_mtx: &Arc<Mutex<&mut RgbImage>>, bar: &Arc<ProgressBar>, x_min: usize, x_max: usize, y_min: usize, y_max: usize) {
+        let x_max = x_max.min(self.width);
+        let y_max = y_max.min(self.height);
+
+        let mut buff = Vec::new();
+
+        for y in y_min..y_max {
+            for x in x_min..x_max {
+                let mut pixel_color = Vec3::zero();
+                for sample in 0..self.samples_per_pixel {
+                    let r = self.get_ray(x, y);
+                    pixel_color += Vec3::from(self.ray_color(&r, self.max_depth, world.clone()));
+                } 
+                // write_color(pixel_color * self.pixel_samples_scale, &mut buff, x as usize, y as usize);
+                buff.push((x, y, pixel_color * self.pixel_samples_scale));
+            }
+            bar.inc((x_max - x_min) as u64);
+        }
+        let mut img = img_mtx.lock().unwrap();
+        for (x, y, color) in buff {
+            write_color(color, &mut img, x, y);
+            // bar.inc(1);
+        }
+
+
+    }
+
+
 }

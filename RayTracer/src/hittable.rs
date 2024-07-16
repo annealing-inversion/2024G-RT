@@ -3,13 +3,14 @@ use crate::vec3::Vec3;
 use crate::interval::Interval;
 use crate::material::Material;
 use crate::aabb::aabb;
-use std::rc::Rc;
+// use std::rc::Rc;
+use std::sync::Arc;
 
 
 pub struct hit_record {
     pub p: Vec3,
     pub normal: Vec3,
-    pub mat:Rc<dyn Material>,
+    pub mat:Arc<dyn Material + Send + Sync>,
     pub t: f64,
     pub u: f64,
     pub v: f64,
@@ -28,12 +29,12 @@ pub trait Hittable {
 }
 
 pub struct translate {
-    pub object: Rc<dyn Hittable>,
+    pub object: Arc<dyn Hittable + Send + Sync>,
     pub offset: Vec3,
     pub bbox: aabb,
 }
 impl translate {
-    pub fn new (object: Rc<dyn Hittable>, offset: Vec3) -> Self {
+    pub fn new (object: Arc<dyn Hittable + Send + Sync>, offset: Vec3) -> Self {
         let bbox = object.bounding_box() + offset;
         Self { object, offset, bbox }
     }
@@ -54,13 +55,13 @@ impl Hittable for translate {
 }
 
 pub struct rotate_y {
-    pub object: Rc<dyn Hittable>,
+    pub object: Arc<dyn Hittable + Send + Sync>,
     pub sin_theta: f64,
     pub cos_theta: f64,
     pub bbox: aabb,
 }
 impl rotate_y {
-    pub fn new(object: Rc<dyn Hittable>, angle: f64) -> Self {
+    pub fn new(object: Arc<dyn Hittable + Send + Sync>, angle: f64) -> Self {
 
         let mut bbox = object.bounding_box();
         let mut new_rot = rotate_y { object, sin_theta: 0.0, cos_theta: 0.0, bbox: aabb::empty };
