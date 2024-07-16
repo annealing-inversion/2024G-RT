@@ -84,9 +84,10 @@ impl Hittable for Sphere {
         // println!("root1: {}", root);
         // println!("ray_t.min: {}, ray_t.max: {}", ray_t.min, ray_t.max);
         // println!("whether: {}", ray_t.surrounds(root));
-        if root <= 0.0001 {
-            return false;
-        }
+        
+        // if root <= 0.00005 {
+        //     return false;
+        // }
         if !ray_t.surrounds(root) {
             root = (h + sqrtd) / a;
             if !ray_t.surrounds(root) {

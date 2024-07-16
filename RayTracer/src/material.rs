@@ -2,7 +2,9 @@ use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::hittable::{hit_record, Hittable};
 use crate::texture::*;
+use crate::raytracer::random_double;
 use std::rc::Rc;
+
 
 
 pub trait Material {
@@ -85,10 +87,12 @@ impl Material for dielectric {
         // *attenuation = Vec3::new(0.9, 0.9, 0.9);
         let ri = if rec.front_face {1.0 / self.refraction_index} else {self.refraction_index};
         let unit_direction = r_in.direction().normalize();
-        let cos_theta = (unit_direction * -1.0).dot(rec.normal).min(1.0);
+        let cos_theta = (unit_direction * -1.0).dot(rec.normal);
+        let cos_theta = cos_theta.min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+        let cannot_refract = ri * sin_theta > 1.0;
         let mut direction = Vec3::zero();
-        if ri * sin_theta > 1.0 || dielectric::reflectance(cos_theta, ri) > rand::random::<f64>() {
+        if cannot_refract || dielectric::reflectance(cos_theta, ri) > random_double() {
             direction = unit_direction.reflect(rec.normal);
         }
         else {

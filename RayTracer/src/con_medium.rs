@@ -25,7 +25,7 @@ impl constant_medium {
         }
     }
     pub fn new_from_color(b: Rc<dyn Hittable>, d: f64, c: Vec3) -> Self {
-        println!("constant_medium::new_from_color");
+        // println!("constant_medium::new_from_color");
         constant_medium {
             boundary: b,
             neg_inv_density: -1.0 / d,
@@ -37,6 +37,7 @@ impl constant_medium {
 impl Hittable for constant_medium {
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut hit_record) -> bool {
         // println!("constant_medium::hit");
+
         // let rec1 = hit_record::new();
         let mut rec1 = hit_record {
             p: Vec3::zero(),
@@ -61,7 +62,6 @@ impl Hittable for constant_medium {
         if !self.boundary.hit(r, Interval::universe, &mut rec1) {
             return false;
         }
-        // println!("test1 rec1.t: {} rec2.t: {}", rec1.t, rec2.t);
         // println!("rec1.t modified: {}", rec1.t + 0.0001);
         if !self.boundary.hit(r, Interval::new(rec1.t + 0.0001, f64::INFINITY), &mut rec2) {
             return false;
@@ -74,10 +74,11 @@ impl Hittable for constant_medium {
         if rec2.t > ray_t.max {
             rec2.t = ray_t.max;
         }
+        // println!("test2.5 rec1.t: {} rec2.t: {}, ray_t.min: {}, ray_t.max: {}", rec1.t, rec2.t, ray_t.min, ray_t.max);
         if rec1.t >= rec2.t {
             return false;
         }
-        // println!("rec1.t: {}, rec2.t: {}", rec1.t, rec2.t);
+        // println!("test3 rec1.t: {}, rec2.t: {}", rec1.t, rec2.t);
 
         if rec1.t < 0.0 {
             rec1.t = 0.0;
