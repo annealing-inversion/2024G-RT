@@ -369,7 +369,7 @@ fn final_scene() {
     let mut cam = Camera::new();
     cam.width = 800;
     cam.height = 800;
-    cam.samples_per_pixel = 100; 
+    cam.samples_per_pixel = 500; 
     cam.aspect_ratio = cam.width as f64 / cam.height as f64;
     cam.max_depth = 50;
     cam.background = Vec3::new(0.0, 0.0, 0.0);
@@ -382,7 +382,7 @@ fn final_scene() {
 }
 
 fn main() {
-    match 10 {
+    match 9 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
