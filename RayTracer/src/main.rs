@@ -380,9 +380,206 @@ fn final_scene() {
     cam.defocus_angle = 0.0;
     cam.render(Arc::new(world));
 }
+fn mc() {
+    let mut world = HittableList::new();
+    //head
+    // let head_up_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let head_up_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let head_up_tex = Arc::new(image_texture::new("head_up.png"));
+    let head_up_mat = Arc::new(lambertian::new_with_texture(head_up_tex));
+    let point1 = Vec3::new(-96.4222,-60.6220,701.8958);
+    let point2 = Vec3::new(-177.1899,88.9660,701.8958);
+    let point3 = Vec3::new(53.1658,20.1457,701.8958);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, head_up_mat.clone())));
+    // let head_front_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    let head_front_tex = Arc::new(image_texture::new("head_front.png"));
+    let head_front_mat = Arc::new(lambertian::new_with_texture(head_front_tex));
+    // let head_front_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let point1 = Vec3::new(-130.8492,-19.4752,524.2944);
+    let point2 = Vec3::new(53.1658,20.1457,531.8958);
+    let point3 = Vec3::new(-96.4222,-60.6220,701.8958);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, head_front_mat.clone())));
+    // let head_right_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    let head_right_tex = Arc::new(image_texture::new("head_right.png"));
+    let head_right_mat = Arc::new(lambertian::new_with_texture(head_right_tex));
+    // let head_right_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let point1 = Vec3::new(53.1658,20.1457,531.8958);
+    let point2 = Vec3::new(-27.6019,169.7337,531.8958);
+    let point3 = Vec3::new(53.1658,20.1457,701.8958);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, head_right_mat.clone())));
+
+    //body
+    // let body_up_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let body_up_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let body_up_tex = Arc::new(image_texture::new("body_up.png"));
+    let body_up_mat = Arc::new(lambertian::new_with_texture(body_up_tex));
+    let point1 = Vec3::new(-130.8492,-19.4752,524.2944);
+    let point2 = Vec3::new(38.3475,-2.9682,524.2944);
+    let point3 = Vec3::new(-139.1027,65.1231,524.2944);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, body_up_mat.clone())));
+    // let body_front_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let body_front_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let body_front_tex = Arc::new(image_texture::new("body_front.png"));
+    let body_front_mat = Arc::new(lambertian::new_with_texture(body_front_tex));
+    let point1 = Vec3::new(-130.8492,-19.4752,269.2944);
+    let point2 = Vec3::new(38.3475,-2.9682,269.2944);
+    let point3 = Vec3::new(-130.8492,-19.4752,524.2944);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, body_front_mat.clone())));
+    // let body_right_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let body_right_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let body_right_tex = Arc::new(image_texture::new("body_right.png"));
+    let body_right_mat = Arc::new(lambertian::new_with_texture(body_right_tex));
+    let point1 = Vec3::new(38.3475,-2.9682,269.2944);
+    let point2 = Vec3::new(30.0940,81.6301,269.2944);
+    let point3 = Vec3::new(38.3475,-2.9682,524.2944);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, body_right_mat.clone())));
+
+    //left arm
+    // let left_arm_up_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    let left_arm_up_tex = Arc::new(image_texture::new("arm_up.png"));
+    let left_arm_up_mat = Arc::new(lambertian::new_with_texture(left_arm_up_tex));
+    // let left_arm_up_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let point1 = Vec3::new(44.3618,-9.3981,467.6647);
+    let point2 = Vec3::new(129.3618,-9.3981,467.6647);
+    let point3 = Vec3::new(44.3618,27.1401,544.4107);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, left_arm_up_mat.clone())));
+    // let left_arm_right_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    let left_arm_right_tex = Arc::new(image_texture::new("arm_side.png"));
+    // let left_arm_right_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let left_arm_right_mat = Arc::new(lambertian::new_with_texture(left_arm_right_tex));
+    let point3 = Vec3::new(129.3618,-9.3981,467.6647);
+    let point1 = Vec3::new(129.3618,220.8402,358.0501);
+    // let point2 = Vec3::new(129.3618,27.1401,544.4107);
+    let point2 = Vec3::new(129.3618,257.3783,434.7962);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, left_arm_right_mat.clone())));
+
+    //right_arm
+    // let right_arm_up_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let right_arm_up_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let right_arm_up_tex = Arc::new(image_texture::new("arm_front.png"));
+    let right_arm_up_mat = Arc::new(lambertian::new_with_texture(right_arm_up_tex));
+    let point1 = Vec3::new(-149.2936,-191.9560,417.1133);
+    let point3 = Vec3::new(-149.2936,25.4590,550.3639);
+    let point2 = Vec3::new(-232.6707, -183.3180,403.0194);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, right_arm_up_mat.clone())));
+
+    // let right_arm_front_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let right_arm_front_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let right_arm_front_tex = Arc::new(image_texture::new("arm_bottom.png"));
+    let right_arm_front_mat = Arc::new(lambertian::new_with_texture(right_arm_front_tex));
+    let point1 = Vec3::new(-216.1404,-139.7492,331.9314);
+    let point3 = Vec3::new(-132.7632,-148.3872,346.0253);
+    let point2 = Vec3::new(-232.6707,-183.3180,403.0194);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, right_arm_front_mat.clone())));
+    // let right_arm_right_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let right_arm_right_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let right_arm_right_tex = Arc::new(image_texture::new("arm_side.png"));
+    let right_arm_right_mat = Arc::new(lambertian::new_with_texture(right_arm_right_tex));
+    let point1 = Vec3::new(-132.7632,-148.3872,346.0253);
+    let point3 = Vec3::new(-132.7632,69.0278,479.2759);
+    let point2 = Vec3::new(-149.2936,-191.9560,417.1133);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, right_arm_right_mat.clone())));
+
+    //left leg
+    // let left_leg_up_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let left_leg_up_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let left_leg_up_tex = Arc::new(image_texture::new("leg_up.png"));
+    let left_leg_up_mat = Arc::new(lambertian::new_with_texture(left_leg_up_tex));
+
+    let point1 = Vec3::new(33.1658,-11.1290,282.0460);
+    let point2 = Vec3::new(33.1658,66.2087,246.7774);
+    let point3 = Vec3::new(-51.8342,-11.1290,282.0460);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, left_leg_up_mat.clone())));
+
+    // let left_leg_right_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let left_leg_right_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let left_leg_right_tex = Arc::new(image_texture::new("leg_side.png"));
+    let left_leg_right_mat = Arc::new(lambertian::new_with_texture(left_leg_right_tex));
+    let point1 = Vec3::new(33.1658,-116.9349,50.0329);
+    let point2 = Vec3::new(33.1658,-39.5972,14.7642);
+    let point3 = Vec3::new(33.1658,-11.1290,282.0460);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, left_leg_right_mat.clone())));
+
+    // let left_leg_front_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let left_leg_front_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let left_leg_front_tex = Arc::new(image_texture::new("leg_front.png"));
+    let left_leg_front_mat = Arc::new(lambertian::new_with_texture(left_leg_front_tex));
+    let point1 = Vec3::new(-51.8342,-116.9349,50.0329);
+    let point2 = Vec3::new(33.1658,-116.9349,50.0329);
+    let point3 = Vec3::new(-51.8342,-11.1290,282.0460);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, left_leg_front_mat.clone())));
+    //right leg
+    // let right_leg_up_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let right_leg_up_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let right_leg_up_tex = Arc::new(image_texture::new("leg_up.png"));
+    let right_leg_up_mat = Arc::new(lambertian::new_with_texture(right_leg_up_tex));
+    let point1 = Vec3::new(-135.3507,-23.3993,254.0267);
+    let point2 = Vec3::new(-50.3606,-22.8742,252.8401);
+    let point3 = Vec3::new(-135.2492,51.4010,294.3987);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, right_leg_up_mat.clone())));
+
+    // let right_leg_right_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let right_leg_right_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let right_leg_right_tex = Arc::new(image_texture::new("leg_side.png"));
+    let right_leg_right_mat = Arc::new(lambertian::new_with_texture(right_leg_right_tex));
+    let point1 = Vec3::new(-54.2413,98.2321,28.4672);
+    let point2 = Vec3::new(-54.1398,173.0324,68.8392);
+    let point3 = Vec3::new(-50.3606,-22.8742,252.8401);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, right_leg_right_mat.clone())));
+    // let right_leg_front_mat = Arc::new(lambertian::new(Vec3::new(0.8, 0.8, 0.8)));
+    // let right_leg_front_mat = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(4.0, 4.0, 4.0)));
+    let right_leg_front_tex = Arc::new(image_texture::new("leg_front.png"));
+    let right_leg_front_mat = Arc::new(lambertian::new_with_texture(right_leg_front_tex));
+    let point1 = Vec3::new(-139.2314,97.7070,29.6537);
+    let point2 = Vec3::new(-54.2413,98.2321,28.4672);
+    let point3 = Vec3::new(-135.3507,-23.3993,254.0267);
+    world.add(Arc::new(Quad::new(point1, point2-point1, point3-point1, right_leg_front_mat.clone())));
+    
+    //light
+    let light = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(10.0, 10.0, 10.0)));
+    world.add(Arc::new(Sphere::new(Vec3::new(-265.2733,-905.0369,620.6736), 250.0, light.clone())));
+    // world.add(Arc::new(Quad::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1000.0), Vec3::new(1000.0, 0.0, 0.0), light.clone())));
+    let light2 = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(10.0, 10.0, 10.0)));
+    world.add(Arc::new(Sphere::new(Vec3::new(1057.1919,-207.2104,224.1840), 220.0, light2.clone())));
+    let light3 = Arc::new(diffuse_light::new_from_emit_color(Vec3::new(10.0, 10.0, 10.0)));
+    world.add(Arc::new(Sphere::new(Vec3::new(955.4125,-972.9311,1373.4002), 320.0, light3.clone())));
+
+
+    //grass
+    let grass_tex = Arc::new(image_texture::new("grass.png"));
+    let grass_mat = Arc::new(lambertian::new_with_texture(grass_tex));
+    // let grass_mat = Arc::new(lambertian::new(Vec3::new(0.055,0.765,0.22)));   
+    // world.add(Arc::new(Quad::new(Vec3::new(-5500.0, -1500.0, -116.93), Vec3::new(0.0, 8000.0, 0.0), Vec3::new(18000.0, 0.0, 0.0), grass_mat.clone())));
+    for i in 0..40 {
+        for j in 0..90 {
+            let x0 = -5500.0 + i as f64 * 200.0;
+            let z0 = -116.93;
+            let y0 = -1500.0 + j as f64 * 200.0;
+            world.add(Arc::new(Quad::new(Vec3::new(x0 as f64, y0 as f64, z0 as f64), Vec3::new(0.0, 200.0, 0.0), Vec3::new(200.0, 0.0, 0.0), grass_mat.clone())));
+        }
+    }
+
+
+
+    let mut cam = Camera::new();
+    cam.width = 800;
+    cam.height = 800;
+    cam.samples_per_pixel = 200;
+    cam.aspect_ratio = cam.width as f64 / cam.height as f64;
+    cam.max_depth = 40;
+    // cam.background = Vec3::new(0.078, 0.76, 1.0);
+    cam.background = Vec3::new(0.0, 0.0, 0.0);
+    cam.vfov = 20.0;
+    cam.lookfrom = Vec3::new(1533.9,-1547.1,1068.3);
+    cam.lookat = Vec3::new(152.9,-151.5,403.4);
+    cam.vup = Vec3::new(0.0, 0.0, 1.0);
+    cam.defocus_angle = 0.0;
+    cam.render(Arc::new(world));
+}
+
 
 fn main() {
-    match 9 {
+    match 10 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
@@ -392,6 +589,7 @@ fn main() {
         7 => cornell_box(),
         8 => cornell_smoke(),
         9 => final_scene(),
+        10 => mc(),
         _ => {}
     }
     
